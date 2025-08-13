@@ -1,0 +1,238 @@
+/* Estilos para los botones de exportación */
+.export-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.export-buttons .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.export-buttons .btn i {
+    font-size: 0.9rem;
+}
+
+/* Estilos para el modal de opciones de exportación */
+.export-options-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.export-options-content {
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    width: 90%;
+    max-width: 500px;
+    padding: 1.5rem;
+}
+
+.export-option {
+    margin-bottom: 1rem;
+}
+
+.export-option label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.export-option select, 
+.export-option input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius);
+}
+
+/* Estilos específicos para impresión */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    .print-content, .print-content * {
+        visibility: visible;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    .page-break {
+        page-break-before: always;
+    }
+    
+    table {
+        page-break-inside: auto;
+    }
+    
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    
+    thead {
+        display: table-header-group;
+    }
+    
+    tfoot {
+        display: table-footer-group;
+    }
+}
+
+/* Mejoras visuales para reportes exportados */
+.report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 1rem;
+}
+
+.report-title {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.report-date {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.report-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.report-stat {
+    background-color: #f9f9f9;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    text-align: center;
+}
+
+.report-stat-title {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.report-stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.report-stat-value.negative {
+    color: var(--accent-color);
+}
+
+.report-section {
+    margin-bottom: 2rem;
+}
+
+.report-section-title {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+
+.report-table th {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem;
+}
+
+.report-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.report-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.report-table tr.negative-row {
+    background-color: #ffeaea;
+}
+
+.report-table td.negative {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.report-footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.9rem;
+    color: #666;
+    text-align: center;
+}
+
+/* Estilos para gráficos en reportes */
+.report-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.report-chart {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 1rem;
+    text-align: center;
+}
+
+.report-chart-title {
+    font-size: 1rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .export-buttons {
+        flex-wrap: wrap;
+    }
+    
+    .report-charts {
+        grid-template-columns: 1fr;
+    }
+}

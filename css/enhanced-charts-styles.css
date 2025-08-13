@@ -1,0 +1,399 @@
+/* ========================================
+   ESTILOS PARA GRÁFICOS CON VISIBILIDAD MEJORADA
+   ======================================== */
+
+/* 📊 Contenedores de gráficos mejorados */
+.chart-container {
+    position: relative;
+    background: linear-gradient(135deg, white 0%, #f8fafc 100%);
+    border-radius: 16px;
+    padding: 25px;
+    margin: 20px 0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.chart-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 16px 16px 0 0;
+}
+
+.chart-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+/* 🎛️ Controles de vista */
+.view-controls {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    margin: 15px 0 !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.view-controls:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.view-controls input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid #cbd5e1;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px !important;
+}
+
+.view-controls input[type="checkbox"]:checked {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: #667eea;
+    position: relative;
+}
+
+.view-controls input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.view-controls label {
+    font-weight: 500 !important;
+    color: #374151 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.view-controls label:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateX(2px);
+}
+
+/* 🔘 Botón de refrescar */
+#refresh-chart {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+#refresh-chart::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+#refresh-chart:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+#refresh-chart:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+#refresh-chart:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+#refresh-chart:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* 🔄 Animación de carga para el botón */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#refresh-chart.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid white;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* 📊 Mejoras específicas para canvas */
+canvas {
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* 🏷️ Indicadores de valor pequeño */
+.small-value-indicator {
+    position: absolute;
+    background: #fbbf24;
+    color: #92400e;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+    z-index: 10;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.8; 
+        transform: scale(1.05);
+    }
+}
+
+/* 🎨 Animaciones para gráficos */
+@keyframes chartFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chart-container.loading {
+    animation: chartFadeIn 0.8s ease-out;
+}
+
+/* 📱 Responsividad mejorada */
+@media (max-width: 768px) {
+    .view-controls {
+        padding: 15px !important;
+    }
+    
+    .view-controls > div {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+    
+    .view-controls label {
+        font-size: 14px !important;
+        width: 100%;
+    }
+    
+    #refresh-chart {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+/* 🎯 Estados especiales */
+.chart-container.enhanced-visibility {
+    position: relative;
+    overflow: visible;
+}
+
+.chart-container.enhanced-visibility::after {
+    content: '👁️ Vista Mejorada Activa';
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    z-index: 10;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.chart-container.has-small-values {
+    border-left: 4px solid #fbbf24;
+}
+
+.chart-container.has-small-values::before {
+    content: '⚠️';
+    position: absolute;
+    top: 10px;
+    left: 15px;
+    background: #fef3c7;
+    color: #92400e;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+    z-index: 10;
+}
+
+/* 🔄 Loading state */
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.chart-loading .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.chart-loading .loading-text {
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* 🎨 Mejoras de accesibilidad */
+.view-controls *:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+.chart-container:focus-within {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* 📊 Estilos para diferentes tipos de gráficos */
+.chart-container[data-chart-type="warehouse"] {
+    border-top: 4px solid #3b82f6;
+}
+
+.chart-container[data-chart-type="product"] {
+    border-top: 4px solid #10b981;
+}
+
+.chart-container[data-chart-type="pallet"] {
+    border-top: 4px solid #f59e0b;
+}
+
+/* ✨ Efectos especiales para valores pequeños visibles */
+.value-label-small {
+    background: rgba(251, 191, 36, 0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #92400e;
+}
+
+/* 📊 Tooltips mejorados */
+.chart-tooltip {
+    background: rgba(0, 0, 0, 0.95) !important;
+    border: 2px solid #667eea !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+    backdrop-filter: blur(10px);
+}
+
+/* 🎯 Indicador de configuración activa */
+.config-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 12px;
+    z-index: 9999;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 🚀 Botón Aplicar Filtros principal mejorado */
+#apply-filters {
+    transition: all 0.3s ease;
+}
+
+#apply-filters:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}

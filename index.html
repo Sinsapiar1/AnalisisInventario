@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Análisis de Inventario</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    
+    <!-- Librerías externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    
+    
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/export.css">
+    <link rel="stylesheet" href="css/enhanced-charts-styles.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Sistema de Análisis de Inventario</h1>
+        </div>
+        <div class="user-controls">
+            <div class="user-info hidden" id="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span id="username">Administrador</span>
+            </div>
+            <button class="btn login-btn" id="login-btn">Iniciar sesión</button>
+            <button class="btn logout-btn hidden" id="logout-btn">Cerrar sesión</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Alertas -->
+        <div class="alert alert-danger hidden" id="error-alert"></div>
+        <div class="alert alert-success hidden" id="success-alert"></div>
+
+        <!-- Mensaje de bienvenida -->
+        <div class="card" id="operator-message">
+            <div class="card-header">
+                <h2>Bienvenido al Sistema de Análisis de Inventario</h2>
+            </div>
+            <p>Este sistema permite analizar el inventario disponible, identificando productos con inventario negativo y agrupándolos por ID de pallet.</p>
+            <p>Para comenzar, inicie sesión como administrador para cargar un archivo de inventario, o como operador para ver el último inventario cargado.</p>
+        </div>
+        
+        <!-- Panel de administrador -->
+        <div class="admin-controls hidden" id="admin-controls">
+            <h3>Panel de Administrador</h3>
+            <p>Desde aquí puedes cargar el archivo de inventario más reciente.</p>
+            
+            <div class="file-upload">
+                <div class="file-input-container">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="file-input" accept=".xlsx, .xls" />
+                        <label for="file-input"><i class="fas fa-upload"></i> Seleccionar archivo</label>
+                    </div>
+                    <span class="file-name" id="file-name">Ningún archivo seleccionado</span>
+                </div>
+                
+                <button class="btn" id="upload-btn">Cargar y analizar</button>
+            </div>
+        </div>
+        
+        <!-- Análisis de inventario -->
+        <div class="card hidden" id="inventory-analysis">
+            <div class="card-header">
+                <h2>Análisis de Inventario</h2>
+                <div>
+                    <span id="last-update"></span>
+                </div>
+            </div>
+            
+            <div class="loading hidden" id="loading">
+                <div class="spinner"></div>
+            </div>
+            
+            <!-- Estadísticas generales -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total de Productos</h3>
+                    <div class="stat-value" id="total-products">0</div>
+                </div>
+                <div class="stat-card negative">
+                    <h3>Productos con Inventario Negativo</h3>
+                    <div class="stat-value" id="negative-inventory">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total de Inventario Físico</h3>
+                    <div class="stat-value" id="total-inventory-value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Pallets Únicos</h3>
+                    <div class="stat-value" id="unique-pallets">0</div>
+                </div>
+            </div>
+            
+            <!-- Pestañas -->
+            <div class="tabs">
+                <div class="tab active" data-tab="negative-inventory">Inventario Negativo</div>
+                <div class="tab" data-tab="pallet-analysis">Análisis por Pallet</div>
+                <div class="tab" data-tab="all-inventory">Inventario Completo</div>
+                <div class="tab" data-tab="dashboard">Dashboard</div>
+            </div>
+            
+            <!-- Contenido de la pestaña: Inventario Negativo -->
+            <div class="tab-content active" id="negative-inventory-content">
+                <div class="search-container">
+                    <input type="text" class="search-input" id="negative-search" placeholder="Buscar producto...">
+                </div>
+                
+                <div class="filter-container">
+                    <select class="filter-select" id="negative-warehouse-filter">
+                        <option value="">Todos los almacenes</option>
+                    </select>
+                </div>
+                
+                <!-- Aquí se agregarán los botones de exportación -->
+                
+                <table id="negative-inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Almacén</th>
+                            <th>ID de Pallet</th>
+                            <th>Inventario Físico</th>
+                            <th>Disponible</th>
+                            <th>Balance Total</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                
+                <div class="pagination" id="negative-pagination"></div>
+            </div>
+            
+            <!-- Contenido de la pestaña: Análisis por Pallet -->
+            <div class="tab-content" id="pallet-analysis-content">
+                <div class="search-container">
+                    <input type="text" class="search-input" id="pallet-search" placeholder="Buscar ID de pallet...">
+                </div>
+                
+                <!-- Aquí se agregarán los botones de exportación -->
+                
+                <table id="pallet-analysis-table">
+                    <thead>
+                        <tr>
+                            <th>ID de Pallet</th>
+                            <th>Número de Productos</th>
+                            <th>Productos Negativos</th>
+                            <th>Inventario Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                
+                <div class="pagination" id="pallet-pagination"></div>
+            </div>
+            
+            <!-- Contenido de la pestaña: Inventario Completo -->
+            <div class="tab-content" id="all-inventory-content">
+                <div class="search-container">
+                    <input type="text" class="search-input" id="all-search" placeholder="Buscar producto...">
+                </div>
+                
+                <div class="filter-container">
+                    <select class="filter-select" id="all-warehouse-filter">
+                        <option value="">Todos los almacenes</option>
+                    </select>
+                    <select class="filter-select" id="all-status-filter">
+                        <option value="">Todos los estados</option>
+                        <option value="positive">Inventario Positivo</option>
+                        <option value="negative">Inventario Negativo</option>
+                        <option value="zero">Inventario Cero</option>
+                    </select>
+                </div>
+                
+                <!-- Aquí se agregarán los botones de exportación -->
+                
+                <table id="all-inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Almacén</th>
+                            <th>ID de Pallet</th>
+                            <th>Inventario Físico</th>
+                            <th>Disponible</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                
+                <div class="pagination" id="all-pagination"></div>
+            </div>
+            
+            <!-- Contenido de la pestaña: Dashboard -->
+            <div class="tab-content" id="dashboard-content">
+                <!-- El contenido del dashboard se generará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de inicio de sesión -->
+    <div class="login-modal hidden" id="login-modal">
+        <div class="login-form">
+            <div class="card-header">
+                <h2>Iniciar Sesión</h2>
+            </div>
+            
+            <div class="form-group">
+                <label for="login-username">Usuario</label>
+                <input type="text" id="login-username" placeholder="Nombre de usuario">
+            </div>
+            
+            <div class="form-group">
+                <label for="login-password">Contraseña</label>
+                <input type="password" id="login-password" placeholder="Contraseña">
+            </div>
+            
+            <div class="alert alert-danger hidden" id="login-error">
+                Usuario o contraseña incorrectos.
+            </div>
+            
+            <div class="form-group">
+                <button class="btn" id="login-submit">Iniciar sesión</button>
+                <button class="btn" id="login-cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plantillas para los modales de detalle -->
+    <template id="product-detail-modal-template">
+        <div class="modal">
+            <div class="modal-content">
+                <span class="close-btn">×</span>
+                <h2 class="product-title"></h2>
+                <div class="product-summary"></div>
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Almacén</th>
+                            <th>ID de Pallet</th>
+                            <th>Inventario Físico</th>
+                            <th>Disponible</th>
+                            <th>Balance Total (por Almacén)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <button class="btn close-button">Cerrar</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Orden correcto de scripts -->
+        <script src="js/utils.js"></script>
+        <script src="js/auth.js"></script>
+        <script src="js/inventory.js"></script>
+        <script src="js/ui.js"></script>
+        <script src="js/charts.js"></script>
+        <script src="js/charts-enhanced-v2.js"></script>
+        <script src="js/charts-visual-enhanced.js"></script>
+        <script src="js/enhanced-charts-visibility.js"></script> <!-- AQUÍ -->
+        <script src="js/export.js"></script>
+        <script src="js/main.js"></script> <!-- Este debe ser el último -->
+</body>
+</html>
