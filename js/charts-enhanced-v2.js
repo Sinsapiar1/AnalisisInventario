@@ -14,6 +14,7 @@
         // Estados para las mejoras
         let loadingStates = {};
         let metricsData = {};
+        let hasEnhancedRendered = false;
         
         /**
          * 🎯 MEJORA 1: Obtener datos REALES del sistema
@@ -447,6 +448,10 @@
          */
         function renderDashboardEnhanced() {
             try {
+                if (hasEnhancedRendered) {
+                    // Evitar re-render innecesario
+                    return originalFunctions.renderDashboard ? originalFunctions.renderDashboard() : undefined;
+                }
                 console.log('🚀 Renderizando dashboard mejorado v2...');
                 
                 // Ejecutar función original primero
@@ -458,7 +463,8 @@
                 setTimeout(() => {
                     createEnhancedMetricsCardsV2();
                     enhanceExistingElements();
-                }, 500);
+                    hasEnhancedRendered = true;
+                }, 300);
                 
             } catch (error) {
                 console.error('❌ Error en renderDashboardEnhanced:', error);

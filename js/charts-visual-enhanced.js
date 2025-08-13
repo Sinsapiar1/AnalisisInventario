@@ -69,7 +69,7 @@
             return {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: getPremiumAnimations().scale,
+                animation: false,
                 interaction: { intersect: false, mode: 'index' },
                 plugins: {
                     title: {
@@ -234,8 +234,12 @@
         /**
          * 🚀 MEJORA 8: Función de render mejorada
          */
+        let hasRendered = false;
         function renderDashboardEnhanced() {
             try {
+                if (hasRendered) {
+                    return originalFunctions.renderDashboard ? originalFunctions.renderDashboard() : undefined;
+                }
                 console.log('🎨 Aplicando mejoras visuales a gráficos...');
                 
                 if (originalFunctions.renderDashboard) {
@@ -243,8 +247,6 @@
                 }
                 
                 setTimeout(() => {
-                    //enhanceChartContainers(); // Esta función puede que ya no sea necesaria si los estilos están en CSS
-                    
                     // Recrear gráficos con estilos y corrección de destrucción
                     createInventoryDistributionChartEnhanced();
                     createWarehouseDistributionChartEnhanced();
@@ -253,7 +255,8 @@
                     if (originalFunctions.createEnhancedMetricsCardsV2) {
                         originalFunctions.createEnhancedMetricsCardsV2();
                     }
-                }, 500);
+                    hasRendered = true;
+                }, 300);
                 
             } catch (error) {
                 console.error('❌ Error aplicando mejoras visuales:', error);

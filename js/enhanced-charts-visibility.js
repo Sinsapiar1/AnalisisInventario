@@ -80,7 +80,7 @@
             return {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: getPremiumAnimations().scale,
+                animation: false,
                 interaction: {
                     intersect: false,
                     mode: 'index'
@@ -618,8 +618,12 @@
         /**
          * 🚀 MEJORA 8: Función de render mejorada
          */
+        let renderedOnce = false;
         function renderDashboardEnhanced() {
             try {
+                if (renderedOnce) {
+                    return originalFunctions.renderDashboard ? originalFunctions.renderDashboard() : undefined;
+                }
                 console.log('🎨 Aplicando mejoras visuales a gráficos...');
                 
                 // Ejecutar función original primero
@@ -641,9 +645,9 @@
                         if (originalFunctions.createEnhancedMetricsCardsV2) {
                             originalFunctions.createEnhancedMetricsCardsV2();
                         }
-                        
-                    }, 800);
-                }, 500);
+                        renderedOnce = true;
+                    }, 400);
+                }, 300);
                 
             } catch (error) {
                 console.error('❌ Error aplicando mejoras visuales:', error);

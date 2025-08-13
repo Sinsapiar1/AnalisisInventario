@@ -258,21 +258,25 @@
                 // Código
                 const codeCell = document.createElement('td');
                 codeCell.textContent = product.code;
+                codeCell.setAttribute('data-label', 'Código');
                 row.appendChild(codeCell);
                 
                 // Nombre
                 const nameCell = document.createElement('td');
                 nameCell.textContent = product.name || '';
+                nameCell.setAttribute('data-label', 'Nombre');
                 row.appendChild(nameCell);
                 
                 // Almacenes
                 const warehousesCell = document.createElement('td');
                 warehousesCell.textContent = Array.from(product.warehouses).join(', ');
+                warehousesCell.setAttribute('data-label', 'Almacenes');
                 row.appendChild(warehousesCell);
                 
                 // Pallets
                 const palletsCell = document.createElement('td');
                 palletsCell.textContent = product.palletCount;
+                palletsCell.setAttribute('data-label', 'Pallets');
                 row.appendChild(palletsCell);
                 
                 // Balance Total
@@ -280,11 +284,13 @@
                 balanceCell.textContent = InventorySystem.Utils.formatNumber(product.totalNegative);
                 balanceCell.style.color = 'red';
                 balanceCell.style.fontWeight = 'bold';
+                balanceCell.setAttribute('data-label', 'Balance Total');
                 row.appendChild(balanceCell);
                 
                 // Disponible
                 const availableCell = document.createElement('td');
                 availableCell.textContent = InventorySystem.Utils.formatNumber(product.totalAvailable);
+                availableCell.setAttribute('data-label', 'Disponible');
                 row.appendChild(availableCell);
                 
                 // Acciones
@@ -296,6 +302,7 @@
                     showProductDetailedView(product.code);
                 });
                 actionsCell.appendChild(detailBtn);
+                actionsCell.setAttribute('data-label', 'Acciones');
                 row.appendChild(actionsCell);
                 
                 negativeInventoryTable.appendChild(row);
@@ -522,11 +529,13 @@
                 // ID de Pallet
                 const palletIdCell = document.createElement('td');
                 palletIdCell.textContent = pallet.palletId;
+                palletIdCell.setAttribute('data-label', 'ID de Pallet');
                 row.appendChild(palletIdCell);
                 
                 // Número de Productos
                 const productsCell = document.createElement('td');
                 productsCell.textContent = pallet.products.length;
+                productsCell.setAttribute('data-label', 'Número de Productos');
                 row.appendChild(productsCell);
                 
                 // Productos Negativos
@@ -539,6 +548,7 @@
                 } else {
                     negativeProductsCell.textContent = '0';
                 }
+                negativeProductsCell.setAttribute('data-label', 'Productos Negativos');
                 row.appendChild(negativeProductsCell);
                 
                 // Inventario Total
@@ -548,6 +558,7 @@
                     totalInventoryCell.style.color = 'red';
                     totalInventoryCell.style.fontWeight = 'bold';
                 }
+                totalInventoryCell.setAttribute('data-label', 'Inventario Total');
                 row.appendChild(totalInventoryCell);
                 
                 // Acciones
@@ -559,6 +570,7 @@
                     showPalletDetails(pallet.palletId);
                 });
                 actionsCell.appendChild(detailsBtn);
+                actionsCell.setAttribute('data-label', 'Acciones');
                 row.appendChild(actionsCell);
                 
                 palletAnalysisTable.appendChild(row);
@@ -664,21 +676,25 @@
                 // Código
                 const codeCell = document.createElement('td');
                 codeCell.textContent = item.code;
+                codeCell.setAttribute('data-label', 'Código');
                 row.appendChild(codeCell);
                 
                 // Nombre
                 const nameCell = document.createElement('td');
                 nameCell.textContent = item.name || '';
+                nameCell.setAttribute('data-label', 'Nombre');
                 row.appendChild(nameCell);
                 
                 // Almacén
                 const warehouseCell = document.createElement('td');
                 warehouseCell.textContent = item.warehouse || '';
+                warehouseCell.setAttribute('data-label', 'Almacén');
                 row.appendChild(warehouseCell);
                 
                 // ID de Pallet
                 const palletIdCell = document.createElement('td');
                 palletIdCell.textContent = item.palletId || 'N/A';
+                palletIdCell.setAttribute('data-label', 'ID de Pallet');
                 row.appendChild(palletIdCell);
                 
                 // Inventario Físico
@@ -688,11 +704,13 @@
                     physicalInventoryCell.style.color = 'red';
                     physicalInventoryCell.style.fontWeight = 'bold';
                 }
+                physicalInventoryCell.setAttribute('data-label', 'Inventario Físico');
                 row.appendChild(physicalInventoryCell);
                 
                 // Disponible
                 const availableCell = document.createElement('td');
                 availableCell.textContent = InventorySystem.Utils.formatNumber(item.available);
+                availableCell.setAttribute('data-label', 'Disponible');
                 row.appendChild(availableCell);
                 
                 allInventoryTable.appendChild(row);

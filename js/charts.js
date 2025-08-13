@@ -28,7 +28,7 @@
             // Inicializar el contenido del dashboard (esto creará los elementos canvas)
             initDashboardContent();
             
-            // Crear gráficos básicos
+            // Crear gráficos básicos (evitar duplicaciones si ya existen)
             createInventoryDistributionChart();
             createWarehouseDistributionChart();
             createNegativeInventoryChart();
@@ -164,6 +164,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: false,
                         plugins: {
                             title: {
                                 display: true,
@@ -340,6 +341,7 @@
                         indexAxis: 'y',
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: false,
                         scales: {
                             x: {
                                 beginAtZero: true,
