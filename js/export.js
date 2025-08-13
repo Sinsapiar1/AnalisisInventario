@@ -37,6 +37,11 @@
             } else if (category === 'all') {
                 baseData = [...fullInventoryData];
 
+                // Limitar volumen si se solicita vista resumida
+                if (advancedFilters.maxRows && Number.isFinite(advancedFilters.maxRows)) {
+                    baseData = baseData.slice(0, advancedFilters.maxRows);
+                }
+
                 const allSearchEl = document.getElementById('all-search');
                 const allWarehouseFilterEl = document.getElementById('all-warehouse-filter');
                 const allStatusFilterEl = document.getElementById('all-status-filter');
@@ -1170,8 +1175,16 @@
             function addSheet(sheetName, headers, processedData, formatOptions) {
                 const safeSheetName = sheetName.substring(0, 31);
                 const formattedData = getFormattedTableData(formatOptions.category, processedData, formatOptions);
-                const ws = XLSX.utils.aoa_to_sheet([headers].concat(formattedData));
+                const ws = XLSX.utils.aoa_to_sheet([headers]);
 
+                // Añadir filas en bloques para reducir picos de memoria en datasets grandes
+                const CHUNK_SIZE = 2000;
+                for (let i = 0; i < formattedData.length; i += CHUNK_SIZE) {
+                    const chunk = formattedData.slice(i, i + CHUNK_SIZE);
+                    XLSX.utils.sheet_add_aoa(ws, chunk, { origin: -1 });
+                }
+
+                // Tipado/formatos numéricos
                 formattedData.forEach((row, rIdx) => {
                     row.forEach((cell, cIdx) => {
                         if (typeof cell === 'number') {
@@ -1241,13 +1254,17 @@
 
                 function arrayToCSV(array, headers) {
                     let csv = headers.join(',') + '\n';
-                    array.forEach(row => {
-                        csv += row.map(cell => {
-                            if (cell === null || cell === undefined) return '';
-                            const cellStr = String(cell).replace(/"/g, '""');
-                            return (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) ? `"${cellStr}"` : cellStr;
-                        }).join(',') + '\n';
-                    });
+                    const CHUNK_SIZE = 5000;
+                    for (let i = 0; i < array.length; i += CHUNK_SIZE) {
+                        const chunk = array.slice(i, i + CHUNK_SIZE);
+                        chunk.forEach(row => {
+                            csv += row.map(cell => {
+                                if (cell === null || cell === undefined) return '';
+                                const cellStr = String(cell).replace(/"/g, '""');
+                                return (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) ? `"${cellStr}"` : cellStr;
+                            }).join(',') + '\n';
+                        });
+                    }
                     return csv;
                 }
 
@@ -2361,6 +2378,24 @@
 
             try {
                 exportModalSingleton.setup(category, defaultOutputFormat, isCompleteReport);
+
+                // Sugerencias de rendimiento para datasets grandes
+                try {
+                    const inv = InventorySystem.Inventory.getInventoryData?.() || [];
+                    if (category === 'all' && Array.isArray(inv) && inv.length > 5000 && typeof exportModalSingleton.injectPerformanceHints === 'function') {
+                        exportModalSingleton.injectPerformanceHints({
+                            suggestions: [
+                                'Activar "Vista resumida" (ej. 5000 filas) para evitar cuelgues del navegador',
+                                'Preferir Excel/CSV para exportaciones completas (>10.000 filas)',
+                                'Evitar incluir Dashboard en exportaciones masivas'
+                            ],
+                            defaults: { maxRows: 5000 }
+                        });
+                    }
+                } catch (e) {
+                    console.warn('No se pudieron inyectar hints de rendimiento:', e);
+                }
+
                 exportModalSingleton.show(callback);
             } catch (error) {
                 console.error('❌ Error al mostrar modal:', error);
