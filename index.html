@@ -40,13 +40,13 @@
             <h1>Sistema de Análisis de Inventario</h1>
         </div>
         <div class="user-controls">
-            <div class="user-info hidden" id="user-info">
+            <div class="user-info" id="user-info">
                 <div class="user-avatar">
                     <i class="fas fa-user"></i>
                 </div>
                 <span id="username">Administrador</span>
             </div>
-            <button class="btn login-btn" id="login-btn">Iniciar sesión</button>
+            <button class="btn login-btn hidden" id="login-btn">Iniciar sesión</button>
             <button class="btn logout-btn hidden" id="logout-btn">Cerrar sesión</button>
         </div>
     </header>
@@ -57,16 +57,16 @@
         <div class="alert alert-success hidden" id="success-alert"></div>
 
         <!-- Mensaje de bienvenida -->
-        <div class="card" id="operator-message">
+        <div class="card hidden" id="operator-message">
             <div class="card-header">
                 <h2>Bienvenido al Sistema de Análisis de Inventario</h2>
             </div>
             <p>Este sistema permite analizar el inventario disponible, identificando productos con inventario negativo y agrupándolos por ID de pallet.</p>
-            <p>Para comenzar, inicie sesión como administrador para cargar un archivo de inventario, o como operador para ver el último inventario cargado.</p>
+            <p>Utilice el panel de administrador para cargar un archivo de inventario y comenzar el análisis.</p>
         </div>
         
         <!-- Panel de administrador -->
-        <div class="admin-controls hidden" id="admin-controls">
+        <div class="admin-controls" id="admin-controls">
             <h3>Panel de Administrador</h3>
             <p>Desde aquí puedes cargar el archivo de inventario más reciente.</p>
             
@@ -224,8 +224,8 @@
         </div>
     </div>
 
-    <!-- Modal de inicio de sesión -->
-    <div class="login-modal hidden" id="login-modal">
+    <!-- Modal de inicio de sesión (oculto permanentemente) -->
+    <div class="login-modal hidden" id="login-modal" style="display: none !important;">
         <div class="login-form">
             <div class="card-header">
                 <h2>Iniciar Sesión</h2>

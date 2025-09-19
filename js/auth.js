@@ -25,13 +25,11 @@
          * Inicializar el módulo de autenticación
          */
         function init() {
-            // Verificar si hay una sesión guardada
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = savedUser;
-                isAdmin = savedUser === 'Administrador';
-                updateUIForUser();
-            }
+            // Auto-login como administrador (sin necesidad de credenciales)
+            currentUser = 'Administrador';
+            isAdmin = true;
+            localStorage.setItem('currentUser', currentUser);
+            updateUIForUser();
             
             // Configurar event listeners
             setupEventListeners();
@@ -133,7 +131,7 @@
          */
         function updateUIForUser() {
             if (currentUser) {
-                // Usuario autenticado
+                // Usuario autenticado (siempre como administrador)
                 if (loginBtn) loginBtn.classList.add('hidden');
                 if (userInfo) userInfo.classList.remove('hidden');
                 if (logoutBtn) logoutBtn.classList.remove('hidden');
@@ -141,25 +139,21 @@
                 if (inventoryAnalysis) inventoryAnalysis.classList.remove('hidden');
                 if (username) username.textContent = currentUser;
                 
-                // Mostrar controles de administrador si es admin
-                if (isAdmin) {
-                    if (adminControls) adminControls.classList.remove('hidden');
-                } else {
-                    if (adminControls) adminControls.classList.add('hidden');
-                }
+                // Mostrar controles de administrador (siempre visible)
+                if (adminControls) adminControls.classList.remove('hidden');
                 
                 // Cargar datos guardados
                 if (typeof InventorySystem.Inventory !== 'undefined') {
                     InventorySystem.Inventory.loadSavedData();
                 }
             } else {
-                // Usuario no autenticado
-                if (loginBtn) loginBtn.classList.remove('hidden');
-                if (userInfo) userInfo.classList.add('hidden');
-                if (logoutBtn) logoutBtn.classList.add('hidden');
-                if (adminControls) adminControls.classList.add('hidden');
-                if (inventoryAnalysis) inventoryAnalysis.classList.add('hidden');
-                if (operatorMessage) operatorMessage.classList.remove('hidden');
+                // Este caso ya no debería ocurrir, pero lo mantenemos por seguridad
+                if (loginBtn) loginBtn.classList.add('hidden');
+                if (userInfo) userInfo.classList.remove('hidden');
+                if (logoutBtn) logoutBtn.classList.remove('hidden');
+                if (adminControls) adminControls.classList.remove('hidden');
+                if (inventoryAnalysis) inventoryAnalysis.classList.remove('hidden');
+                if (operatorMessage) operatorMessage.classList.add('hidden');
             }
         }
         
