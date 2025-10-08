@@ -504,6 +504,30 @@
             }, 1000);
         }
         
+        /**
+         * 🔄 MEJORA 9: Resetear estado para permitir re-renderizado
+         */
+        function resetEnhancedState() {
+            console.log('🔄 Reseteando estado del dashboard mejorado...');
+            hasEnhancedRendered = false;
+            loadingStates = {};
+            metricsData = {};
+            
+            // Limpiar cards mejoradas si existen
+            const dashboardContent = document.getElementById('dashboard-content');
+            if (dashboardContent) {
+                const enhancedCards = dashboardContent.querySelector('.enhanced-metrics-cards-v2');
+                if (enhancedCards) {
+                    enhancedCards.remove();
+                }
+                
+                const dataSources = dashboardContent.querySelectorAll('.data-source-info');
+                dataSources.forEach(el => el.remove());
+            }
+            
+            console.log('✅ Estado del dashboard mejorado reseteado');
+        }
+        
         // Exportar funciones mejoradas
         return {
             ...originalFunctions,
@@ -514,10 +538,12 @@
             animateCards,
             addCardInteractivity,
             showMetricDetails,
+            resetEnhancedState,
             
             // Función de utilidad para actualizar métricas manualmente
             updateMetrics: function() {
                 console.log('🔄 Actualizando métricas...');
+                hasEnhancedRendered = false;
                 createEnhancedMetricsCardsV2();
             }
         };

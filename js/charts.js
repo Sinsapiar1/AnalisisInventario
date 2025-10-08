@@ -22,8 +22,13 @@
                 return;
             }
             
+            console.log('📊 Renderizando dashboard completo...');
+            
             // Limpiar cualquier gráfico existente
             destroyCharts();
+            
+            // Limpiar completamente el contenido del dashboard antes de recrearlo
+            clearDashboardContent();
             
             // Inicializar el contenido del dashboard (esto creará los elementos canvas)
             initDashboardContent();
@@ -35,6 +40,8 @@
             
             // Crear el dashboard avanzado
             createAdvancedDashboard();
+            
+            console.log('✅ Dashboard renderizado correctamente');
         }
         
         /**
@@ -115,6 +122,34 @@
         }
         
         /**
+         * Limpiar completamente el contenido del dashboard
+         */
+        function clearDashboardContent() {
+            const dashboardContent = document.getElementById('dashboard-content');
+            if (!dashboardContent) return;
+            
+            console.log('🧹 Limpiando contenido del dashboard...');
+            
+            // Remover todas las secciones existentes
+            const sectionsToRemove = [
+                '.basic-charts-section',
+                '.drill-down-section',
+                '.in-order-section',
+                '.enhanced-metrics-cards-v2',
+                '.data-source-info'
+            ];
+            
+            sectionsToRemove.forEach(selector => {
+                const section = dashboardContent.querySelector(selector);
+                if (section) {
+                    section.remove();
+                }
+            });
+            
+            console.log('✅ Contenido del dashboard limpiado');
+        }
+        
+        /**
          * Destruir todos los gráficos existentes
          */
         function destroyCharts() {
@@ -126,6 +161,7 @@
             chartIds.forEach(chartId => {
                 const chartInstance = Chart.getChart(chartId);
                 if (chartInstance) {
+                    console.log(`  ✓ Destruyendo gráfico: ${chartId}`);
                     chartInstance.destroy();
                 }
             });
@@ -1163,7 +1199,9 @@
             createPalletChart,  
             showWarehouseDetails,
             initDrillDownCharts, // Sigue expuesta por si algún otro módulo la llama directamente.
-            initInOrderAnalysis
+            initInOrderAnalysis,
+            clearDashboardContent,
+            destroyCharts
         };
     })(); // <-- ¡Cierre correcto del IIFE interno!
 })(window.InventorySystem || (window.InventorySystem = {})); // <-- ¡Cierre correcto del IIFE externo y asignación del namespace!

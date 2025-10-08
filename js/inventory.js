@@ -59,6 +59,108 @@
         }
         
         /**
+         * Realizar un hard refresh completo del sistema
+         * Limpia todos los datos, gráficos, tablas y estados
+         */
+        function performHardRefresh() {
+            console.log('🔄 Iniciando hard refresh del sistema...');
+            
+            try {
+                // 1. Limpiar datos en memoria
+                inventoryData = [];
+                palletDetails = {};
+                filteredData = {
+                    negative: [],
+                    pallet: [],
+                    all: []
+                };
+                window.productBalances = {};
+                window.currentNegativeProducts = [];
+                
+                // 2. Limpiar estadísticas en el DOM
+                if (totalProducts) totalProducts.textContent = '0';
+                if (negativeInventory) negativeInventory.textContent = '0';
+                if (totalInventoryValue) totalInventoryValue.textContent = '0';
+                if (uniquePallets) uniquePallets.textContent = '0';
+                
+                // 3. Limpiar UI (tablas, gráficos, paginación)
+                if (typeof InventorySystem.UI !== 'undefined' && InventorySystem.UI.resetInventoryView) {
+                    InventorySystem.UI.resetInventoryView();
+                }
+                
+                // 4. Destruir todos los gráficos de Chart.js
+                const chartIds = [
+                    'inventory-chart', 'warehouse-chart', 'negative-chart',
+                    'main-chart', 'detail-chart', 'in-order-chart'
+                ];
+                
+                chartIds.forEach(chartId => {
+                    const chartInstance = Chart.getChart(chartId);
+                    if (chartInstance) {
+                        console.log(`  ✓ Destruyendo gráfico: ${chartId}`);
+                        chartInstance.destroy();
+                    }
+                });
+                
+                // 5. Limpiar contenedores del dashboard
+                const dashboardContent = document.getElementById('dashboard-content');
+                if (dashboardContent) {
+                    // Remover cards mejoradas del dashboard v2
+                    const enhancedCards = dashboardContent.querySelector('.enhanced-metrics-cards-v2');
+                    if (enhancedCards) {
+                        console.log('  ✓ Removiendo cards mejoradas del dashboard');
+                        enhancedCards.remove();
+                    }
+                    
+                    // Remover mensajes de fuente de datos
+                    const dataSources = dashboardContent.querySelectorAll('.data-source-info');
+                    dataSources.forEach(el => el.remove());
+                    
+                    // Limpiar contenedores de gráficos avanzados
+                    const mainChartContainer = document.getElementById('main-chart-container');
+                    if (mainChartContainer) mainChartContainer.innerHTML = '';
+                    
+                    const detailChartContainer = document.getElementById('detail-chart-container');
+                    if (detailChartContainer) {
+                        detailChartContainer.innerHTML = '';
+                        detailChartContainer.style.display = 'none';
+                    }
+                    
+                    const detailTableContainer = document.getElementById('detail-table-container');
+                    if (detailTableContainer) {
+                        detailTableContainer.innerHTML = '';
+                        detailTableContainer.style.display = 'none';
+                    }
+                    
+                    // Limpiar tabla de material en pedido
+                    const inOrderTableContainer = document.getElementById('in-order-table-container');
+                    if (inOrderTableContainer) {
+                        inOrderTableContainer.innerHTML = '';
+                    }
+                }
+                
+                // 6. Resetear el flag de renderizado del dashboard mejorado
+                if (typeof InventorySystem.Charts !== 'undefined' && InventorySystem.Charts.resetEnhancedState) {
+                    InventorySystem.Charts.resetEnhancedState();
+                }
+                
+                // 7. Limpiar modales que pudieran estar abiertos
+                const existingModals = document.querySelectorAll('.modal');
+                existingModals.forEach(modal => {
+                    if (modal.parentNode) {
+                        modal.parentNode.removeChild(modal);
+                    }
+                });
+                
+                console.log('✅ Hard refresh completado');
+                
+            } catch (error) {
+                console.error('❌ Error durante hard refresh:', error);
+                // Continuar de todos modos para no bloquear la carga del archivo
+            }
+        }
+        
+        /**
          * Cargar archivo de inventario
          */
         function uploadFile() {
@@ -69,6 +171,9 @@
             }
             
             InventorySystem.Utils.showLoading(true);
+            
+            // HARD REFRESH: Limpiar completamente antes de cargar nuevos datos
+            performHardRefresh();
             
             const reader = new FileReader();
             reader.onload = function(e) {
