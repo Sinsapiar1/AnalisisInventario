@@ -122,21 +122,23 @@
         }
         
         /**
-         * Limpiar completamente el contenido del dashboard
+         * Limpiar contenido del dashboard (EXCEPTO las cards mejoradas)
+         * Las cards mejoradas solo se limpian en el hard refresh al cargar nuevo archivo
          */
         function clearDashboardContent() {
             const dashboardContent = document.getElementById('dashboard-content');
             if (!dashboardContent) return;
             
-            console.log('🧹 Limpiando contenido del dashboard...');
+            console.log('🧹 Limpiando contenido del dashboard (preservando cards)...');
             
-            // Remover todas las secciones existentes
+            // Remover secciones de gráficos (PERO NO las cards mejoradas)
             const sectionsToRemove = [
                 '.basic-charts-section',
                 '.drill-down-section',
                 '.in-order-section',
-                '.enhanced-metrics-cards-v2',
                 '.data-source-info'
+                // NOTA: .enhanced-metrics-cards-v2 NO se elimina aquí
+                // Solo se limpia en performHardRefresh() al cargar nuevo archivo Excel
             ];
             
             sectionsToRemove.forEach(selector => {
@@ -146,7 +148,7 @@
                 }
             });
             
-            console.log('✅ Contenido del dashboard limpiado');
+            console.log('✅ Contenido del dashboard limpiado (cards preservadas)');
         }
         
         /**
