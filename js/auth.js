@@ -39,10 +39,10 @@
          * Configurar event listeners para autenticación
          */
         function setupEventListeners() {
-            // Eventos de inicio de sesión
-            loginBtn.addEventListener('click', showLoginModal);
-            logoutBtn.addEventListener('click', logout);
-            loginSubmit.addEventListener('click', login);
+            // Eventos de inicio de sesión (solo si existen los elementos)
+            if (loginBtn) loginBtn.addEventListener('click', showLoginModal);
+            if (logoutBtn) logoutBtn.addEventListener('click', logout);
+            if (loginSubmit) loginSubmit.addEventListener('click', login);
             
             // LÓGICA REFORZADA PARA EL BOTÓN CANCELAR DEL MODAL DE LOGIN
             if (loginCancel) { // Asegura que el botón exista antes de añadir el listener
@@ -51,8 +51,6 @@
                     hideLoginModal();
                     console.log('Modal de Login ocultado.');
                 });
-            } else {
-                console.warn('Botón login-cancel no encontrado.');
             }
             
             // Cerrar modal al hacer clic fuera
@@ -64,9 +62,9 @@
                         console.log('Modal de Login ocultado.');
                     }
                 });
-            } else {
-                console.warn('Modal login-modal no encontrado.');
             }
+            
+            console.log('✅ Sistema de autenticación configurado (modo administrador automático)');
         }
         
         /**

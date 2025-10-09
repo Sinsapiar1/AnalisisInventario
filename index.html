@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/export.css">
     <link rel="stylesheet" href="css/enhanced-charts-styles.css">
+    <link rel="stylesheet" href="css/streamlit-button.css">
     <style>
       /* Mejora: tabla responsive en pantallas pequeñas */
       @media (max-width: 640px) {
@@ -39,15 +40,11 @@
         <div class="logo">
             <h1>Sistema de Análisis de Inventario</h1>
         </div>
-        <div class="user-controls">
-            <div class="user-info" id="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <span id="username">Administrador</span>
-            </div>
-            <button class="btn login-btn hidden" id="login-btn">Iniciar sesión</button>
-            <button class="btn logout-btn hidden" id="logout-btn">Cerrar sesión</button>
+        <div class="header-actions">
+            <button class="btn-streamlit" id="streamlit-btn">
+                <i class="fas fa-chart-line"></i>
+                <span>Análisis Avanzado</span>
+            </button>
         </div>
     </header>
 
@@ -224,30 +221,52 @@
         </div>
     </div>
 
-    <!-- Modal de inicio de sesión (oculto permanentemente) -->
-    <div class="login-modal hidden" id="login-modal" style="display: none !important;">
-        <div class="login-form">
-            <div class="card-header">
-                <h2>Iniciar Sesión</h2>
+    <!-- Modal de redirección a Streamlit -->
+    <div class="streamlit-modal hidden" id="streamlit-modal">
+        <div class="modal-overlay"></div>
+        <div class="streamlit-modal-content">
+            <button class="modal-close" id="streamlit-modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="modal-icon">
+                <i class="fas fa-external-link-alt"></i>
             </div>
             
-            <div class="form-group">
-                <label for="login-username">Usuario</label>
-                <input type="text" id="login-username" placeholder="Nombre de usuario">
+            <h2>Análisis Avanzado de Inventarios</h2>
+            
+            <div class="modal-description">
+                <p>Está a punto de abrir una <strong>nueva ventana</strong> con nuestra herramienta avanzada de análisis histórico de <strong>inventarios negativos</strong>.</p>
+                
+                <div class="modal-features">
+                    <div class="feature-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Análisis histórico detallado</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-filter"></i>
+                        <span>Filtros avanzados por fecha</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-download"></i>
+                        <span>Exportación de reportes</span>
+                    </div>
+                </div>
+                
+                <div class="modal-note">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <strong>Nota importante:</strong> Esta herramienta funciona con <strong>Streamlit</strong>. Si la aplicación está inactiva, puede que necesites presionar el botón <strong>"Yes, get this app back up"</strong> para activarla (toma solo unos segundos).
+                    </div>
+                </div>
             </div>
             
-            <div class="form-group">
-                <label for="login-password">Contraseña</label>
-                <input type="password" id="login-password" placeholder="Contraseña">
-            </div>
-            
-            <div class="alert alert-danger hidden" id="login-error">
-                Usuario o contraseña incorrectos.
-            </div>
-            
-            <div class="form-group">
-                <button class="btn" id="login-submit">Iniciar sesión</button>
-                <button class="btn" id="login-cancel">Cancelar</button>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="streamlit-cancel">Cancelar</button>
+                <button class="btn-confirm" id="streamlit-confirm">
+                    <i class="fas fa-external-link-alt"></i>
+                    Abrir Análisis Avanzado
+                </button>
             </div>
         </div>
     </div>
@@ -286,6 +305,7 @@
         <script defer src="js/charts-visual-enhanced.js"></script>
         <script defer src="js/enhanced-charts-visibility.js"></script>
         <script defer src="js/export.js"></script>
+        <script defer src="js/streamlit-modal.js"></script>
         <script defer src="js/main.js"></script>
 </body>
 </html>
