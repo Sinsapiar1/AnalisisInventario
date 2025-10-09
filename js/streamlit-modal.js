@@ -125,20 +125,14 @@
         console.log('🚀 Abriendo aplicación Streamlit...');
         
         // Abrir en nueva pestaña
-        const newWindow = window.open(STREAMLIT_URL, '_blank', 'noopener,noreferrer');
+        // Nota: window.open con 'noopener' puede retornar null incluso cuando se abre correctamente
+        // por razones de seguridad en navegadores modernos, así que asumimos que se abrió
+        window.open(STREAMLIT_URL, '_blank', 'noopener,noreferrer');
         
-        // Verificar si se abrió correctamente
-        if (newWindow) {
-            console.log('✅ Ventana de Streamlit abierta exitosamente');
-            
-            // Cerrar el modal después de un pequeño delay
-            setTimeout(closeModal, 500);
-        } else {
-            console.error('❌ No se pudo abrir la ventana. Puede estar bloqueada por el navegador.');
-            
-            // Mostrar mensaje de error al usuario
-            alert('No se pudo abrir la ventana. Por favor, permite ventanas emergentes en tu navegador y vuelve a intentarlo.');
-        }
+        console.log('✅ Solicitud de apertura enviada');
+        
+        // Cerrar el modal después de un pequeño delay
+        setTimeout(closeModal, 500);
     }
     
     /**
