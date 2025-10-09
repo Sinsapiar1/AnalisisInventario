@@ -91,7 +91,7 @@
     border-top: none;
     border-radius: 0 0 6px 6px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
+    z-index: 10000;
     max-height: 0;
     overflow: hidden;
     opacity: 0;
@@ -305,7 +305,7 @@
         bottom: 0;
         border-radius: 0;
         max-height: 100vh;
-        z-index: 10000;
+        z-index: 10001;
         animation: slideUp 0.3s ease;
     }
     
@@ -337,7 +337,7 @@
     }
 }
 
-/* Overlay para móvil */
+/* Overlay para móvil y desktop */
 .multi-select-overlay {
     display: none;
     position: fixed;

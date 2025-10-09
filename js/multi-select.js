@@ -216,15 +216,16 @@
             this.dropdown.classList.add('open');
             this.trigger.classList.add('open');
             this.arrow.classList.add('open');
-            this.overlay.classList.add('show');
+            
+            // Mostrar overlay SOLO en móvil (< 768px)
+            // En desktop, el overlay no es necesario y causaba problemas de clics
+            if (window.innerWidth <= 768) {
+                this.overlay.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
             
             // Focus en búsqueda
             setTimeout(() => this.searchInput.focus(), 100);
-            
-            // Prevenir scroll en móvil
-            if (window.innerWidth <= 768) {
-                document.body.style.overflow = 'hidden';
-            }
         }
         
         /**
@@ -242,7 +243,7 @@
             this.filteredOptions = [...this.allOptions];
             this.renderOptions();
             
-            // Restaurar scroll
+            // Restaurar scroll (siempre, independiente del tamaño de pantalla)
             document.body.style.overflow = '';
         }
         
