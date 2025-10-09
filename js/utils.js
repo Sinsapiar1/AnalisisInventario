@@ -122,6 +122,46 @@ InventorySystem.Utils = (function() {
         return div.firstChild;
     }
     
+    /**
+     * Sanitiza el valor de un almacén
+     * Convierte a string y limpia espacios, maneja valores numéricos y notación científica
+     * @param {any} value - Valor del almacén desde Excel
+     * @returns {string} - Valor sanitizado como string, o cadena vacía si es inválido
+     */
+    function sanitizeWarehouse(value) {
+        // Si es null, undefined o string vacío, retornar vacío
+        if (value === null || value === undefined) {
+            return '';
+        }
+        
+        // Convertir a string y limpiar espacios
+        const str = String(value).trim();
+        
+        // Si después de trim queda vacío, retornar vacío
+        if (str === '') {
+            return '';
+        }
+        
+        // Retornar el valor sanitizado
+        // Esto maneja correctamente:
+        // - Números puros (0, 62, 61, etc.)
+        // - Strings con números y letras (612R, 61T, etc.)
+        // - Strings con guiones (RO-TX, RO-TN, etc.)
+        // - Notación científica mal interpretada (28e)
+        return str;
+    }
+    
+    /**
+     * Verifica si un almacén es válido (no vacío)
+     * @param {any} warehouse - Valor del almacén a verificar
+     * @returns {boolean} - true si el almacén es válido
+     */
+    function isValidWarehouse(warehouse) {
+        return warehouse !== null && 
+               warehouse !== undefined && 
+               warehouse !== '';
+    }
+    
     // Exportar funciones públicas
     return {
         formatNumber,
@@ -131,7 +171,9 @@ InventorySystem.Utils = (function() {
         showLoading,
         captureChartSafely,
         isValidNumber,
-        createElementFromHTML // Añadir la nueva función aquí
+        createElementFromHTML,
+        sanitizeWarehouse,
+        isValidWarehouse
     };
 })();
 

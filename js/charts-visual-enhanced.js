@@ -169,7 +169,7 @@
                 const inventoryData = InventorySystem.Inventory.getInventoryData();
                 const warehouseCounts = {};
                 inventoryData.forEach(item => {
-                    if (item.warehouse) {
+                    if (InventorySystem.Utils.isValidWarehouse(item.warehouse)) {
                         if (!warehouseCounts[item.warehouse]) warehouseCounts[item.warehouse] = { total: 0, negative: 0 };
                         warehouseCounts[item.warehouse].total++;
                         if (item.physicalInventory < 0) warehouseCounts[item.warehouse].negative++;

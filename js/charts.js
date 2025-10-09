@@ -243,7 +243,7 @@
                 // Agrupar por almacén
                 const warehouseCounts = {};
                 inventoryData.forEach(item => {
-                    if (item.warehouse) {
+                    if (InventorySystem.Utils.isValidWarehouse(item.warehouse)) {
                         if (!warehouseCounts[item.warehouse]) {
                             warehouseCounts[item.warehouse] = {
                                 total: 0,
@@ -501,7 +501,7 @@
                 // Agrupar datos por almacén
                 const warehouseData = {};
                 inventoryData.forEach(item => {
-                    if (item.warehouse) {
+                    if (InventorySystem.Utils.isValidWarehouse(item.warehouse)) {
                         if (!warehouseData[item.warehouse]) {
                             warehouseData[item.warehouse] = {
                                 totalInventory: 0,
@@ -1020,7 +1020,8 @@
                 
                 inventoryData.forEach(item => {
                     if (item.inOrder && item.inOrder > 0) {
-                        const warehouse = item.warehouse || 'Sin Almacén';
+                        const warehouse = InventorySystem.Utils.isValidWarehouse(item.warehouse) ? 
+                            item.warehouse : 'Sin Almacén';
                         if (!inOrderByWarehouse[warehouse]) {
                             inOrderByWarehouse[warehouse] = {
                                 total: 0,

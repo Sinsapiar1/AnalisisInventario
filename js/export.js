@@ -1548,7 +1548,8 @@
                 // 2. Análisis de distribución por almacén
                 const warehouseDistribution = {};
                 fullInventoryData.forEach(item => {
-                    const warehouse = item.warehouse || 'Sin Almacén';
+                    const warehouse = InventorySystem.Utils.isValidWarehouse(item.warehouse) ? 
+                        item.warehouse : 'Sin Almacén';
                     if (!warehouseDistribution[warehouse]) {
                         warehouseDistribution[warehouse] = { total: 0, negative: 0, positive: 0 };
                     }

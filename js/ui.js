@@ -810,7 +810,7 @@
             const inventoryData = InventorySystem.Inventory.getInventoryData();
             
             inventoryData.forEach(item => {
-                if (item.warehouse) {
+                if (InventorySystem.Utils.isValidWarehouse(item.warehouse)) {
                     warehouses.add(item.warehouse);
                 }
             });

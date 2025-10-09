@@ -275,7 +275,8 @@
             code: row[columnIndices.code],
             name: columnIndices.name !== -1 ? row[columnIndices.name] : '',
             searchName: columnIndices.searchName !== -1 ? row[columnIndices.searchName] : '',
-            warehouse: columnIndices.warehouse !== -1 ? row[columnIndices.warehouse] : '',
+            warehouse: columnIndices.warehouse !== -1 ? 
+                InventorySystem.Utils.sanitizeWarehouse(row[columnIndices.warehouse]) : '',
             palletId: columnIndices.palletId !== -1 ? row[columnIndices.palletId] : '',
             serialNumber: columnIndices.serialNumber !== -1 ? row[columnIndices.serialNumber] : '',
             physicalInventory: InventorySystem.Utils.isValidNumber(physicalInventoryVal) ? 
