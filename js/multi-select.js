@@ -164,20 +164,37 @@
          * Setup event listeners
          */
         setupEventListeners() {
-            // Toggle dropdown
-            this.trigger.addEventListener('click', () => this.toggle());
+            // Toggle dropdown (solo el trigger, no sus hijos)
+            this.trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggle();
+            });
+            
+            // Prevenir que clics dentro del dropdown cierren el componente
+            this.dropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
             
             // Búsqueda
             this.searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
             
             // Seleccionar todos
-            this.selectAllBtn.addEventListener('click', () => this.selectAll());
+            this.selectAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.selectAll();
+            });
             
             // Limpiar selección
-            this.clearBtn.addEventListener('click', () => this.clearSelection());
+            this.clearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.clearSelection();
+            });
             
             // Aplicar filtro
-            this.applyBtn.addEventListener('click', () => this.apply());
+            this.applyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.apply();
+            });
             
             // Cerrar con overlay
             this.overlay.addEventListener('click', () => this.close());
@@ -189,11 +206,14 @@
                 }
             });
             
-            // Cerrar al hacer clic fuera
+            // Cerrar al hacer clic fuera (con delay para evitar conflictos)
+            // Se usa setTimeout para que este listener se ejecute DESPUÉS de otros eventos
             document.addEventListener('click', (e) => {
-                if (this.isOpen && !this.wrapper.contains(e.target)) {
-                    this.close();
-                }
+                setTimeout(() => {
+                    if (this.isOpen && !this.wrapper.contains(e.target)) {
+                        this.close();
+                    }
+                }, 0);
             });
         }
         
