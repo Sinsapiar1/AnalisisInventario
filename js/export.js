@@ -43,12 +43,16 @@
                 }
 
                 const allSearchEl = document.getElementById('all-search');
-                const allWarehouseFilterEl = document.getElementById('all-warehouse-filter');
                 const allStatusFilterEl = document.getElementById('all-status-filter');
 
                 const searchTerm = allSearchEl ? allSearchEl.value.toLowerCase() : '';
-                const warehouseFilter = allWarehouseFilterEl ? allWarehouseFilterEl.value : '';
                 const statusFilter = allStatusFilterEl ? allStatusFilterEl.value : '';
+                
+                // MULTI-SELECT: Obtener almacenes seleccionados
+                const selectedWarehouses = (typeof InventorySystem !== 'undefined' && 
+                    InventorySystem.UI && 
+                    InventorySystem.UI.getSelectedAllWarehouses) ? 
+                    InventorySystem.UI.getSelectedAllWarehouses() : [];
 
                 baseData = baseData.filter(item => {
                     const matchesSearch = searchTerm === '' ||
@@ -56,7 +60,8 @@
                         (item.name && String(item.name).toLowerCase().includes(searchTerm)) ||
                         (item.palletId && String(item.palletId).toLowerCase().includes(searchTerm));
 
-                    const matchesWarehouse = warehouseFilter === '' || item.warehouse === warehouseFilter;
+                    const matchesWarehouse = selectedWarehouses.length === 0 || 
+                        selectedWarehouses.includes(item.warehouse);
 
                     let matchesStatus = true;
                     if (statusFilter === 'positive') {
@@ -2241,12 +2246,16 @@
                     
                     // Aplicar filtros de la UI actual
                     const allSearchEl = document.getElementById('all-search');
-                    const allWarehouseFilterEl = document.getElementById('all-warehouse-filter');
                     const allStatusFilterEl = document.getElementById('all-status-filter');
 
                     const searchTerm = allSearchEl ? allSearchEl.value.toLowerCase() : '';
-                    const warehouseFilter = allWarehouseFilterEl ? allWarehouseFilterEl.value : '';
                     const statusFilter = allStatusFilterEl ? allStatusFilterEl.value : '';
+                    
+                    // MULTI-SELECT: Obtener almacenes seleccionados
+                    const selectedWarehouses = (typeof InventorySystem !== 'undefined' && 
+                        InventorySystem.UI && 
+                        InventorySystem.UI.getSelectedAllWarehouses) ? 
+                        InventorySystem.UI.getSelectedAllWarehouses() : [];
 
                     visibleData = visibleData.filter(item => {
                         const matchesSearch = searchTerm === '' ||
@@ -2254,7 +2263,8 @@
                             (item.name && String(item.name).toLowerCase().includes(searchTerm)) ||
                             (item.palletId && String(item.palletId).toLowerCase().includes(searchTerm));
 
-                        const matchesWarehouse = warehouseFilter === '' || item.warehouse === warehouseFilter;
+                        const matchesWarehouse = selectedWarehouses.length === 0 || 
+                            selectedWarehouses.includes(item.warehouse);
 
                         let matchesStatus = true;
                         if (statusFilter === 'positive') {

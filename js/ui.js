@@ -35,6 +35,10 @@
         const allWarehouseFilter = document.getElementById('all-warehouse-filter');
         const allStatusFilter = document.getElementById('all-status-filter');
         
+        // Instancias de multi-select
+        let negativeWarehouseMultiSelect = null;
+        let allWarehouseMultiSelect = null;
+        
         /**
          * Inicializar el módulo de UI
          */
@@ -44,6 +48,9 @@
             
             // Configurar event listeners para búsqueda y filtros
             setupSearchFilterEventListeners();
+            
+            // Inicializar multi-selects (se inicializarán cuando haya datos)
+            // Se inicializan en updateWarehouseFilters()
         }
         
         /**
@@ -67,10 +74,10 @@
             palletSearch.addEventListener('input', filterPalletAnalysis);
             allSearch.addEventListener('input', filterAllInventory);
             
-            // Eventos de filtro
-            negativeWarehouseFilter.addEventListener('change', filterNegativeInventory);
-            allWarehouseFilter.addEventListener('change', filterAllInventory);
+            // Eventos de filtro de estado (el de almacén lo maneja el multi-select)
             allStatusFilter.addEventListener('change', filterAllInventory);
+            
+            // NOTA: Los filtros de almacén ahora son multi-select y se manejan en updateWarehouseFilters()
         }
         
         /**
@@ -135,8 +142,14 @@
                     .filter(pb => InventorySystem.Utils.isValidNumber(pb.totalInventory) && parseFloat(pb.totalInventory) < 0);
                 
                 // Paso 2: Aplicar filtros de la UI (búsqueda, almacén) sobre estos 'productBalance'
-                if (warehouseFilter !== '') {
-                    initialNegativeProducts = initialNegativeProducts.filter(pb => pb.warehouse === warehouseFilter);
+                // MULTI-SELECT: Filtrar por múltiples almacenes seleccionados
+                const selectedWarehouses = negativeWarehouseMultiSelect ? 
+                    negativeWarehouseMultiSelect.getSelectedValues() : [];
+                
+                if (selectedWarehouses.length > 0) {
+                    initialNegativeProducts = initialNegativeProducts.filter(pb => 
+                        selectedWarehouses.includes(pb.warehouse)
+                    );
                 }
                 
                 initialNegativeProducts = initialNegativeProducts.filter(pb => 
@@ -603,9 +616,12 @@
             resetInventoryView();
             
             const searchTerm = allSearch.value.toLowerCase();
-            const warehouseFilter = allWarehouseFilter.value;
             const statusFilter = allStatusFilter.value;
             const inventoryData = InventorySystem.Inventory.getInventoryData();
+            
+            // MULTI-SELECT: Obtener almacenes seleccionados
+            const selectedWarehouses = allWarehouseMultiSelect ? 
+                allWarehouseMultiSelect.getSelectedValues() : [];
             
             // Filtrar productos
             const filteredInventory = inventoryData.filter(item => {
@@ -616,8 +632,9 @@
                     (item.name && item.name.toLowerCase().includes(searchTerm)) || 
                     (item.palletId && item.palletId.toString().toLowerCase().includes(searchTerm));
                 
-                // Filtro de almacén
-                const matchesWarehouse = warehouseFilter === '' || item.warehouse === warehouseFilter;
+                // Filtro de almacén (multi-select)
+                const matchesWarehouse = selectedWarehouses.length === 0 || 
+                    selectedWarehouses.includes(item.warehouse);
                 
                 // Filtro de estado
                 let matchesStatus = true;
@@ -818,10 +835,12 @@
             // Actualizar selectores de filtro
             const warehouseOptions = Array.from(warehouses).sort();
             
+            // Llenar el select original (necesario para el multi-select)
             // Filtro de almacén para inventario negativo
             negativeWarehouseFilter.innerHTML = '<option value="">Todos los almacenes</option>';
             warehouseOptions.forEach(warehouse => {
                 const option = document.createElement('option');
+                option.value = warehouse;
                 option.textContent = warehouse;
                 negativeWarehouseFilter.appendChild(option);
             });
@@ -834,6 +853,50 @@
                 option.textContent = warehouse;
                 allWarehouseFilter.appendChild(option);
             });
+            
+            // Inicializar multi-selects si existen los elementos y la clase MultiSelect está disponible
+            if (typeof window.MultiSelect !== 'undefined') {
+                // Destruir instancias previas si existen
+                if (negativeWarehouseMultiSelect) {
+                    negativeWarehouseMultiSelect.destroy();
+                }
+                if (allWarehouseMultiSelect) {
+                    allWarehouseMultiSelect.destroy();
+                }
+                
+                // Crear nuevas instancias
+                negativeWarehouseMultiSelect = new window.MultiSelect(negativeWarehouseFilter, {
+                    placeholder: 'Todos los almacenes',
+                    searchPlaceholder: 'Buscar almacén...',
+                    selectAllText: 'Todos',
+                    clearText: 'Limpiar',
+                    applyText: 'Aplicar Filtro',
+                    noResultsText: 'No se encontraron almacenes',
+                    maxDisplay: 2,
+                    onApply: function(selected) {
+                        console.log('🔍 Filtro aplicado - Almacenes seleccionados:', selected.length);
+                        filterNegativeInventory();
+                    }
+                });
+                
+                allWarehouseMultiSelect = new window.MultiSelect(allWarehouseFilter, {
+                    placeholder: 'Todos los almacenes',
+                    searchPlaceholder: 'Buscar almacén...',
+                    selectAllText: 'Todos',
+                    clearText: 'Limpiar',
+                    applyText: 'Aplicar Filtro',
+                    noResultsText: 'No se encontraron almacenes',
+                    maxDisplay: 2,
+                    onApply: function(selected) {
+                        console.log('🔍 Filtro aplicado - Almacenes seleccionados:', selected.length);
+                        filterAllInventory();
+                    }
+                });
+                
+                console.log('✅ Multi-selects de almacén inicializados');
+            } else {
+                console.warn('⚠️ MultiSelect no está disponible, usando selects normales');
+            }
         }
         
         /**
@@ -911,6 +974,26 @@
             currentPage[type] = page;
         }
         
+        /**
+         * Obtener almacenes seleccionados en el multi-select de inventario negativo
+         */
+        function getSelectedNegativeWarehouses() {
+            if (negativeWarehouseMultiSelect) {
+                return negativeWarehouseMultiSelect.getSelectedValues();
+            }
+            return [];
+        }
+        
+        /**
+         * Obtener almacenes seleccionados en el multi-select de inventario completo
+         */
+        function getSelectedAllWarehouses() {
+            if (allWarehouseMultiSelect) {
+                return allWarehouseMultiSelect.getSelectedValues();
+            }
+            return [];
+        }
+        
         // Exportar funciones públicas
         return {
             init,
@@ -923,7 +1006,9 @@
             getCurrentPage,
             setCurrentPage,
             renderPagination,
-            refreshPageContent
+            refreshPageContent,
+            getSelectedNegativeWarehouses,
+            getSelectedAllWarehouses
         };
     })();
 })(window.InventorySystem || {});
