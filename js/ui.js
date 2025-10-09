@@ -994,6 +994,27 @@
             return [];
         }
         
+        /**
+         * Resetear multi-selects (limpiar selección)
+         * Se usa en el hard refresh al cargar nuevo archivo
+         */
+        function resetMultiSelects() {
+            try {
+                if (negativeWarehouseMultiSelect && typeof negativeWarehouseMultiSelect.clearSelection === 'function') {
+                    negativeWarehouseMultiSelect.clearSelection();
+                    console.log('  ✓ Multi-select de Inventario Negativo reseteado');
+                }
+                
+                if (allWarehouseMultiSelect && typeof allWarehouseMultiSelect.clearSelection === 'function') {
+                    allWarehouseMultiSelect.clearSelection();
+                    console.log('  ✓ Multi-select de Inventario Completo reseteado');
+                }
+            } catch (error) {
+                console.warn('⚠️ Error al resetear multi-selects:', error);
+                // No es crítico, continuar
+            }
+        }
+        
         // Exportar funciones públicas
         return {
             init,
@@ -1008,7 +1029,8 @@
             renderPagination,
             refreshPageContent,
             getSelectedNegativeWarehouses,
-            getSelectedAllWarehouses
+            getSelectedAllWarehouses,
+            resetMultiSelects
         };
     })();
 })(window.InventorySystem || {});

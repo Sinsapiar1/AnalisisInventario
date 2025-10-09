@@ -144,7 +144,46 @@
                     InventorySystem.Charts.resetEnhancedState();
                 }
                 
-                // 7. Limpiar modales que pudieran estar abiertos
+                // 7. Limpiar filtros, búsquedas y multi-selects de la UI
+                console.log('  ✓ Limpiando filtros y búsquedas de UI...');
+                
+                try {
+                    // Limpiar campos de búsqueda
+                    const negativeSearch = document.getElementById('negative-search');
+                    const palletSearch = document.getElementById('pallet-search');
+                    const allSearch = document.getElementById('all-search');
+                    
+                    if (negativeSearch) {
+                        negativeSearch.value = '';
+                        console.log('  ✓ Búsqueda de Inventario Negativo limpiada');
+                    }
+                    if (palletSearch) {
+                        palletSearch.value = '';
+                        console.log('  ✓ Búsqueda de Análisis por Pallet limpiada');
+                    }
+                    if (allSearch) {
+                        allSearch.value = '';
+                        console.log('  ✓ Búsqueda de Inventario Completo limpiada');
+                    }
+                    
+                    // Resetear filtro de estado
+                    const allStatusFilter = document.getElementById('all-status-filter');
+                    if (allStatusFilter) {
+                        allStatusFilter.value = '';
+                        console.log('  ✓ Filtro de estado reseteado');
+                    }
+                    
+                    // Resetear multi-selects de almacenes
+                    if (typeof InventorySystem.UI !== 'undefined' && 
+                        typeof InventorySystem.UI.resetMultiSelects === 'function') {
+                        InventorySystem.UI.resetMultiSelects();
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Error al limpiar filtros UI:', error);
+                    // No es crítico, continuar con la carga del archivo
+                }
+                
+                // 8. Limpiar modales que pudieran estar abiertos
                 const existingModals = document.querySelectorAll('.modal');
                 existingModals.forEach(modal => {
                     if (modal.parentNode) {
