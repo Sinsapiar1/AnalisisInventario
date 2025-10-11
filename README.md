@@ -577,9 +577,37 @@ Aunque este es un proyecto interno, las sugerencias son bienvenidas:
 
 ## 📜 Licencia
 
-Este proyecto es de uso interno/demostración. 
+Este proyecto está licenciado bajo la **Licencia MIT** - ver el archivo [LICENSE](LICENSE) para más detalles.
 
-**Nota**: Las librerías externas (Chart.js, XLSX.js, jsPDF) tienen sus propias licencias.
+### Resumen de la Licencia MIT
+
+✅ **Uso comercial** permitido  
+✅ **Modificación** permitida  
+✅ **Distribución** permitida  
+✅ **Uso privado** permitido  
+✅ **Sublicenciamiento** permitido  
+
+**Condiciones**:
+- Incluir aviso de copyright original
+- Incluir copia de la licencia MIT
+
+**Sin garantías**: El software se proporciona "TAL CUAL", sin garantías de ningún tipo.
+
+### Librerías de Terceros
+
+Este proyecto utiliza las siguientes librerías open source (todas compatibles con uso comercial):
+
+| Librería | Versión | Licencia | Uso |
+|----------|---------|----------|-----|
+| **XLSX.js** | 0.18.5 | Apache-2.0 | Lectura de Excel |
+| **Chart.js** | 3.9.1 | MIT | Gráficos |
+| **jsPDF** | 2.5.1 | MIT | Generación PDF |
+| **jsPDF-AutoTable** | 3.5.28 | MIT | Tablas en PDF |
+| **Font Awesome** | 6.1.1 | Free License | Iconos |
+
+Todas las librerías se cargan desde CDN públicas y se usan conforme a sus licencias.
+
+Para más información sobre licencias de terceros, ver archivo [LICENSE](LICENSE).
 
 ---
 

@@ -1,0 +1,64 @@
+MIT License
+
+Copyright (c) 2025 Sistema de Análisis de Inventario
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+THIRD-PARTY LICENSES
+
+This software uses the following third-party libraries via CDN.
+Each library is used in compliance with its respective license:
+
+1. SheetJS Community Edition (XLSX.js)
+   Version: 0.18.5
+   License: Apache-2.0
+   Copyright: SheetJS LLC
+   URL: https://github.com/SheetJS/sheetjs
+   
+2. Chart.js
+   Version: 3.9.1
+   License: MIT
+   Copyright: Chart.js Contributors
+   URL: https://github.com/chartjs/Chart.js
+
+3. jsPDF
+   Version: 2.5.1
+   License: MIT
+   Copyright: James Hall and jsPDF contributors
+   URL: https://github.com/parallax/jsPDF
+
+4. jsPDF-AutoTable
+   Version: 3.5.28
+   License: MIT
+   Copyright: Simon Bengtsson
+   URL: https://github.com/simonbengtsson/jsPDF-AutoTable
+
+5. Font Awesome Free
+   Version: 6.1.1
+   License: Font Awesome Free License
+   - Icons: CC BY 4.0 License
+   - Fonts: SIL OFL 1.1 License
+   - Code: MIT License
+   Copyright: Fonticons, Inc.
+   URL: https://fontawesome.com/license/free
+
+All third-party libraries are loaded from public CDNs and are used in compliance
+with their respective licenses. No modifications have been made to these libraries.
