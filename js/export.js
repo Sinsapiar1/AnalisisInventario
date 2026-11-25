@@ -243,7 +243,8 @@
             
             try {
                 // 🚀 MEJORA 1: Scale 4K (factor 4 para máxima calidad)
-                const scale = 4;
+                // Factor 2: nítido al imprimir sin generar PDFs de decenas de MB
+                const scale = 2;
                 const tempCanvas = document.createElement('canvas');
                 const tempCtx = tempCanvas.getContext('2d');
                 
@@ -542,7 +543,7 @@
                             // 🚀 Usar nueva función 4K
                             const imageData = captureHighQualityChart(canvas);
                             if (imageData) {
-                                doc.addImage(imageData, 'PNG', xPos, yPos + 8, chartWidth, chartHeight);
+                                doc.addImage(imageData, 'PNG', xPos, yPos + 8, chartWidth, chartHeight, undefined, 'FAST');
                                 
                                 // Metadata del gráfico
                                 doc.setFontSize(7);
@@ -1059,7 +1060,7 @@
                             // 🚀 Usar captura 4K si está disponible, sino usar la función segura
                             const imageData = captureHighQualityChart(canvas) || 
                                 (InventorySystem.Utils.captureChartSafely ? InventorySystem.Utils.captureChartSafely(canvas) : canvas.toDataURL('image/png'));
-                            doc.addImage(imageData, 'PNG', 14, currentY, (doc.internal.pageSize.getWidth() - 28), 100);
+                            doc.addImage(imageData, 'PNG', 14, currentY, (doc.internal.pageSize.getWidth() - 28), 100, undefined, 'FAST');
                             currentY += 110;
                         } else {
                             console.warn(`Canvas '${canvas.id}' tiene tamaño 0, no se puede exportar. Saltando.`);
