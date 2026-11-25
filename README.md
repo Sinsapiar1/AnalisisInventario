@@ -287,34 +287,41 @@ Cada pestaña tiene su botón de exportación específico.
 
 ### Columnas Obligatorias ⚠️
 
-| Columna | Tipo | Obligatoria | Descripción |
-|---------|------|-------------|-------------|
-| **Código** | Texto/Número | ✅ **SÍ** | Código único del producto |
-| **Inventario Físico** | Número | ✅ **SÍ** | Cantidad en inventario |
+Se acepta la exportación de Axapta en **español o en inglés**. Las columnas se
+reconocen por su nombre, así que pueden venir en cualquier orden.
+
+| Axapta en español | Axapta en inglés | Obligatoria |
+|-------------------|------------------|-------------|
+| **Código** / Código de artículo | **Item number** | ✅ **SÍ** |
+| **Inventario físico** | **Physical stock** / Physical inventory | ✅ **SÍ** |
 
 ### Columnas Opcionales (Recomendadas)
 
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| Nombre del producto | Texto | Nombre descriptivo |
-| Nombre de búsqueda | Texto | Alias para búsquedas |
-| Almacén | Texto | Ubicación del producto |
-| ID de Pallet | Texto/Número | Identificador del pallet |
-| Número de Serie | Texto | Serie del producto |
-| Física Reservada | Número | Cantidad reservada |
-| Física Disponible | Número | Cantidad disponible |
-| Pedido en Total | Número | Total en pedido |
-| En Pedido | Número | Cantidad en pedido |
-| Ordenada Reservada | Número | Cantidad ordenada reservada |
-| Total Disponible | Número | Disponible total |
+| Axapta en español | Axapta en inglés |
+|-------------------|------------------|
+| Nombre del producto | Product name |
+| Nombre de búsqueda | Search name |
+| Almacén | Warehouse |
+| ID de pallet | Pallet ID |
+| Número de serie | Serial number |
+| Física reservada | Physical reserved |
+| Física disponible | Available physical |
+| Pedido en total | Ordered in total |
+| En pedido | On order |
+| Ordenada reservada | Ordered reserved |
+| Total disponible | Total available |
+
+Para admitir otro nombre de columna, añádalo a `COLUMN_ALIASES` en `js/inventory.js`.
 
 ### Notas Importantes
 
-✅ **Se usa la primera hoja del archivo**  
-✅ **Los encabezados deben estar en la primera fila**  
-✅ **Usa los nombres exactos en español** (mayúsculas/minúsculas flexibles)  
-✅ **Columnas vacías se rellenan con 0 o cadena vacía**  
-✅ **Valores no numéricos en columnas numéricas se convierten a 0**  
+✅ **Se usa la primera hoja que tenga los encabezados esperados**  
+✅ **Los encabezados pueden estar en cualquiera de las primeras 25 filas**  
+✅ **No importan mayúsculas, tildes ni el orden de las columnas**  
+✅ **Si una columna aparece repetida, se usa la primera**  
+✅ **Columnas opcionales ausentes se tratan como 0 o texto vacío**  
+✅ **Números como texto se leen en formato español (1.269,50) o inglés (1,269.50)**  
+✅ **El inventario cargado se guarda completo en el navegador (IndexedDB)**  
 
 ### Ejemplo de Formato
 

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#2c3e50">
+    <meta name="theme-color" content="#17212b">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <title>Sistema de Análisis de Inventario</title>
+    <title>Análisis de inventario</title>
     <link rel="icon" href="logo.svg" type="image/svg+xml">
     
     <!-- Librerías externas (solo necesarias) -->
@@ -13,10 +13,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
     
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600&display=swap">
+
     <!-- Estilos propios -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -24,201 +27,204 @@
     <link rel="stylesheet" href="css/enhanced-charts-styles.css">
     <link rel="stylesheet" href="css/streamlit-button.css">
     <link rel="stylesheet" href="css/multi-select.css">
-    <style>
-      /* Mejora: tabla responsive en pantallas pequeñas */
-      @media (max-width: 640px) {
-        table thead { display: none; }
-        table, table tbody, table tr, table td { display: block; width: 100%; }
-        table tr { margin-bottom: 0.75rem; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        table td { padding: 0.6rem 0.9rem; border: none; border-bottom: 1px solid #f1f1f1; }
-        table td:last-child { border-bottom: 0; }
-        table td::before { content: attr(data-label); font-weight: 600; display: block; color: #666; margin-bottom: 4px; }
-      }
-    </style>
+    <!-- Ajustes finales: unifican el aspecto de los componentes anteriores -->
+    <link rel="stylesheet" href="css/theme.css">
 </head>
 <body>
-    <header>
+    <a class="skip-link" href="#main">Ir al contenido</a>
+
+    <header class="app-header">
         <div class="logo">
-            <h1>Sistema de Análisis de Inventario</h1>
+            <span class="logo-mark" aria-hidden="true"></span>
+            <h1>Análisis de inventario</h1>
         </div>
         <div class="header-actions">
-            <button class="btn-streamlit" id="streamlit-btn">
-                <i class="fas fa-chart-line"></i>
-                <span>Análisis Avanzado</span>
+            <button class="btn-streamlit" id="streamlit-btn" type="button">
+                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                <span>Análisis histórico</span>
             </button>
         </div>
     </header>
 
-    <div class="container">
-        <!-- Alertas -->
-        <div class="alert alert-danger hidden" id="error-alert"></div>
-        <div class="alert alert-success hidden" id="success-alert"></div>
+    <main class="container" id="main">
+        <input type="file" id="file-input" class="sr-only" accept=".xlsx,.xlsm,.xls,.csv" tabindex="-1" aria-hidden="true" />
 
-        <!-- Mensaje de bienvenida -->
-        <div class="card hidden" id="operator-message">
-            <div class="card-header">
-                <h2>Bienvenido al Sistema de Análisis de Inventario</h2>
+        <!-- Carga de archivo -->
+        <section class="admin-controls" id="admin-controls" aria-label="Archivo de inventario">
+            <!-- Sin datos: área para soltar o elegir el archivo -->
+            <div class="dropzone" id="dropzone">
+                <div class="dropzone-art" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="dropzone-copy">
+                    <h2>Cargue el stock exportado de Axapta</h2>
+                    <p>Arrastre aquí el Excel o elíjalo desde su equipo. Sirve la exportación en español o en inglés, con las columnas en cualquier orden.</p>
+                    <button type="button" class="btn btn-primary btn-lg js-pick-file"><i class="fas fa-folder-open" aria-hidden="true"></i> Elegir archivo</button>
+                    <dl class="dropzone-needs">
+                        <dt>Columnas obligatorias</dt>
+                        <dd>Código <span>Item number</span></dd>
+                        <dd>Inventario físico <span>Physical stock</span></dd>
+                    </dl>
+                    <p class="dropzone-privacy"><i class="fas fa-lock" aria-hidden="true"></i> El archivo se analiza en este navegador; no se sube a ningún servidor.</p>
+                </div>
             </div>
-            <p>Este sistema permite analizar el inventario disponible, identificando productos con inventario negativo y agrupándolos por ID de pallet.</p>
-            <p>Utilice el panel de administrador para cargar un archivo de inventario y comenzar el análisis.</p>
-        </div>
-        
-        <!-- Panel de administrador -->
-        <div class="admin-controls" id="admin-controls">
-            <h3>Panel de Administrador</h3>
-            <p>Desde aquí puedes cargar el archivo de inventario más reciente.</p>
-            
-            <div class="file-upload">
-                <div class="file-input-container">
-                    <div class="file-input-wrapper">
-                        <input type="file" id="file-input" accept=".xlsx, .xls" />
-                        <label for="file-input"><i class="fas fa-upload"></i> Seleccionar archivo</label>
+
+            <!-- Con datos: qué archivo está cargado -->
+            <div class="file-bar">
+                <i class="fas fa-file-excel file-bar-icon" aria-hidden="true"></i>
+                <div class="file-bar-main">
+                    <div class="file-bar-title">
+                        <span class="file-name" id="file-name">Inventario guardado</span>
+                        <span class="file-updated" id="last-update"></span>
                     </div>
-                    <span class="file-name" id="file-name">Ningún archivo seleccionado</span>
+                    <div class="file-summary" id="file-summary"></div>
                 </div>
-                
-                <button class="btn" id="upload-btn">Cargar y analizar</button>
+                <div class="file-bar-actions">
+                    <span id="export-all-slot"></span>
+                    <button type="button" class="btn btn-quiet js-pick-file" id="change-file-btn"><i class="fas fa-arrows-rotate" aria-hidden="true"></i> Cambiar archivo</button>
+                    <button class="btn btn-quiet" id="clear-data-btn" type="button"><i class="fas fa-xmark" aria-hidden="true"></i> Quitar</button>
+                </div>
             </div>
-        </div>
-        
+        </section>
+
         <!-- Análisis de inventario -->
-        <div class="card hidden" id="inventory-analysis">
-            <div class="card-header">
-                <h2>Análisis de Inventario</h2>
-                <div>
-                    <span id="last-update"></span>
-                </div>
-            </div>
-            
-            <div class="loading hidden" id="loading">
-                <div class="spinner"></div>
-            </div>
-            
+        <section class="card hidden" id="inventory-analysis" aria-label="Análisis de inventario">
             <!-- Estadísticas generales -->
             <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Total de Productos</h3>
-                    <div class="stat-value" id="total-products">0</div>
-                </div>
                 <div class="stat-card negative">
-                    <h3>Productos con Inventario Negativo</h3>
+                    <h3>Productos con inventario negativo</h3>
                     <div class="stat-value" id="negative-inventory">0</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Total de Inventario Físico</h3>
+                    <h3>Total de productos</h3>
+                    <div class="stat-value" id="total-products">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Total de inventario físico</h3>
                     <div class="stat-value" id="total-inventory-value">0</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Pallets Únicos</h3>
+                    <h3>Pallets únicos</h3>
                     <div class="stat-value" id="unique-pallets">0</div>
                 </div>
             </div>
-            
+
             <!-- Pestañas -->
-            <div class="tabs">
-                <div class="tab active" data-tab="negative-inventory">Inventario Negativo</div>
-                <div class="tab" data-tab="pallet-analysis">Análisis por Pallet</div>
-                <div class="tab" data-tab="all-inventory">Inventario Completo</div>
-                <div class="tab" data-tab="dashboard">Dashboard</div>
+            <div class="tabs" role="tablist" aria-label="Vistas del inventario">
+                <button type="button" role="tab" class="tab active" data-tab="negative-inventory" aria-selected="true">Inventario negativo</button>
+                <button type="button" role="tab" class="tab" data-tab="pallet-analysis" aria-selected="false">Por pallet</button>
+                <button type="button" role="tab" class="tab" data-tab="all-inventory" aria-selected="false">Inventario completo</button>
+                <button type="button" role="tab" class="tab" data-tab="dashboard" aria-selected="false">Dashboard</button>
             </div>
-            
+
             <!-- Contenido de la pestaña: Inventario Negativo -->
             <div class="tab-content active" id="negative-inventory-content">
-                <div class="search-container">
-                    <input type="text" class="search-input" id="negative-search" placeholder="Buscar producto...">
+                <div class="table-toolbar">
+                    <div class="search-container">
+                        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="search" class="search-input" id="negative-search" placeholder="Código o nombre" aria-label="Buscar producto por código o nombre">
+                    </div>
+                    <div class="filter-container">
+                        <select class="filter-select" id="negative-warehouse-filter" aria-label="Filtrar por almacén">
+                            <option value="">Todos los almacenes</option>
+                        </select>
+                    </div>
+                    <!-- Aquí se agregan los botones de exportación -->
                 </div>
-                
-                <div class="filter-container">
-                    <select class="filter-select" id="negative-warehouse-filter">
-                        <option value="">Todos los almacenes</option>
-                    </select>
+
+                <div class="table-wrap">
+                    <table id="negative-inventory-table" class="data-table">
+                        <thead><tr></tr></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-                
-                <!-- Aquí se agregarán los botones de exportación -->
-                
-                <table id="negative-inventory-table">
-                    <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Nombre</th>
-                            <th>Almacén</th>
-                            <th>ID de Pallet</th>
-                            <th>Inventario Físico</th>
-                            <th>Disponible</th>
-                            <th>Balance Total</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                
-                <div class="pagination" id="negative-pagination"></div>
+
+                <div class="table-footer">
+                    <span class="result-count" id="negative-count" aria-live="polite"></span>
+                    <div class="pagination" id="negative-pagination"></div>
+                    <select class="page-size-select" data-table="negative" aria-label="Filas por página"></select>
+                </div>
             </div>
-            
+
             <!-- Contenido de la pestaña: Análisis por Pallet -->
             <div class="tab-content" id="pallet-analysis-content">
-                <div class="search-container">
-                    <input type="text" class="search-input" id="pallet-search" placeholder="Buscar ID de pallet...">
+                <div class="table-toolbar">
+                    <div class="search-container">
+                        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="search" class="search-input" id="pallet-search" placeholder="ID de pallet" aria-label="Buscar por ID de pallet">
+                    </div>
+                    <!-- Aquí se agregan los botones de exportación -->
                 </div>
-                
-                <!-- Aquí se agregarán los botones de exportación -->
-                
-                <table id="pallet-analysis-table">
-                    <thead>
-                        <tr>
-                            <th>ID de Pallet</th>
-                            <th>Número de Productos</th>
-                            <th>Productos Negativos</th>
-                            <th>Inventario Total</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                
-                <div class="pagination" id="pallet-pagination"></div>
+
+                <div class="table-wrap">
+                    <table id="pallet-analysis-table" class="data-table">
+                        <thead><tr></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="table-footer">
+                    <span class="result-count" id="pallet-count" aria-live="polite"></span>
+                    <div class="pagination" id="pallet-pagination"></div>
+                    <select class="page-size-select" data-table="pallet" aria-label="Filas por página"></select>
+                </div>
             </div>
-            
+
             <!-- Contenido de la pestaña: Inventario Completo -->
             <div class="tab-content" id="all-inventory-content">
-                <div class="search-container">
-                    <input type="text" class="search-input" id="all-search" placeholder="Buscar producto...">
+                <div class="table-toolbar">
+                    <div class="search-container">
+                        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="search" class="search-input" id="all-search" placeholder="Código, nombre o pallet" aria-label="Buscar por código, nombre o pallet">
+                    </div>
+                    <div class="filter-container">
+                        <select class="filter-select" id="all-warehouse-filter" aria-label="Filtrar por almacén">
+                            <option value="">Todos los almacenes</option>
+                        </select>
+                        <select class="filter-select" id="all-status-filter" aria-label="Filtrar por estado del inventario">
+                            <option value="">Todos los estados</option>
+                            <option value="positive">Inventario positivo</option>
+                            <option value="negative">Inventario negativo</option>
+                            <option value="zero">Inventario en cero</option>
+                        </select>
+                    </div>
+                    <!-- Aquí se agregan los botones de exportación -->
                 </div>
-                
-                <div class="filter-container">
-                    <select class="filter-select" id="all-warehouse-filter">
-                        <option value="">Todos los almacenes</option>
-                    </select>
-                    <select class="filter-select" id="all-status-filter">
-                        <option value="">Todos los estados</option>
-                        <option value="positive">Inventario Positivo</option>
-                        <option value="negative">Inventario Negativo</option>
-                        <option value="zero">Inventario Cero</option>
-                    </select>
+
+                <div class="table-wrap">
+                    <table id="all-inventory-table" class="data-table">
+                        <thead><tr></tr></thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-                
-                <!-- Aquí se agregarán los botones de exportación -->
-                
-                <table id="all-inventory-table">
-                    <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Nombre</th>
-                            <th>Almacén</th>
-                            <th>ID de Pallet</th>
-                            <th>Inventario Físico</th>
-                            <th>Disponible</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                
-                <div class="pagination" id="all-pagination"></div>
+
+                <div class="table-footer">
+                    <span class="result-count" id="all-count" aria-live="polite"></span>
+                    <div class="pagination" id="all-pagination"></div>
+                    <select class="page-size-select" data-table="all" aria-label="Filas por página"></select>
+                </div>
             </div>
-            
+
             <!-- Contenido de la pestaña: Dashboard -->
             <div class="tab-content" id="dashboard-content">
                 <!-- El contenido del dashboard se generará dinámicamente -->
             </div>
+        </section>
+    </main>
+
+    <!-- Indicador de carga -->
+    <div class="loading hidden" id="loading" role="status">
+        <div class="loading-box">
+            <div class="spinner" aria-hidden="true"></div>
+            <span>Leyendo el archivo…</span>
+        </div>
+    </div>
+
+    <!-- Aviso al arrastrar un archivo sobre la página -->
+    <div class="drop-overlay" aria-hidden="true">
+        <div class="drop-overlay-box">
+            <i class="fas fa-file-arrow-down"></i>
+            <span>Suelte el archivo para analizarlo</span>
         </div>
     </div>
 
@@ -274,24 +280,33 @@
 
     <!-- Plantillas para los modales de detalle -->
     <template id="product-detail-modal-template">
-        <div class="modal">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del producto">
             <div class="modal-content">
-                <span class="close-btn">×</span>
-                <h2 class="product-title"></h2>
+                <div class="modal-head">
+                    <div>
+                        <h2 class="product-title"></h2>
+                        <p class="product-code"></p>
+                    </div>
+                    <button type="button" class="close-btn" aria-label="Cerrar detalle">×</button>
+                </div>
                 <div class="product-summary"></div>
-                <table class="detail-table">
-                    <thead>
-                        <tr>
-                            <th>Almacén</th>
-                            <th>ID de Pallet</th>
-                            <th>Inventario Físico</th>
-                            <th>Disponible</th>
-                            <th>Balance Total (por Almacén)</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <button class="btn close-button">Cerrar</button>
+                <div class="table-wrap">
+                    <table class="detail-table data-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Almacén</th>
+                                <th scope="col">ID de pallet</th>
+                                <th scope="col" class="num">Inventario físico</th>
+                                <th scope="col" class="num">Disponible</th>
+                                <th scope="col" class="num">Balance del pallet</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="modal-foot">
+                    <button type="button" class="btn btn-primary close-button">Cerrar</button>
+                </div>
             </div>
         </div>
     </template>

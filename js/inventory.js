@@ -9,6 +9,7 @@
         // Variables privadas
         let inventoryData = [];
         let lastUpdate = null;
+        let sourceInfo = null; // nombre del archivo, idioma, columnas reconocidas
         let palletDetails = {};
         let filteredData = {
             negative: [],
@@ -19,7 +20,9 @@
         // Elementos DOM
         const fileInput = document.getElementById('file-input');
         const fileName = document.getElementById('file-name');
-        const uploadBtn = document.getElementById('upload-btn');
+        const dropzone = document.getElementById('dropzone');
+        const fileSummary = document.getElementById('file-summary');
+        const clearDataBtn = document.getElementById('clear-data-btn');
         const lastUpdateEl = document.getElementById('last-update');
         
         // Elementos estadísticos
@@ -28,36 +31,219 @@
         const totalInventoryValue = document.getElementById('total-inventory-value');
         const uniquePallets = document.getElementById('unique-pallets');
         
+        /* =====================================================
+         * Reconocimiento de columnas (Axapta en español e inglés)
+         * Los encabezados se buscan por nombre, en cualquier posición.
+         * Para admitir otro encabezado basta con añadirlo a la lista.
+         * ===================================================== */
+        const COLUMN_ALIASES = {
+            code: {
+                label: 'Código de artículo',
+                es: ['codigo de articulo', 'codigo del articulo', 'codigo', 'numero de articulo', 'articulo', 'cod articulo'],
+                en: ['item number', 'item id', 'item no', 'item code', 'product number', 'item']
+            },
+            name: {
+                label: 'Nombre del producto',
+                es: ['nombre del producto', 'nombre de producto', 'nombre del articulo', 'nombre de articulo', 'descripcion'],
+                en: ['product name', 'item name', 'description']
+            },
+            searchName: {
+                label: 'Nombre de búsqueda',
+                es: ['nombre de busqueda'],
+                en: ['search name']
+            },
+            warehouse: {
+                label: 'Almacén',
+                es: ['almacen'],
+                en: ['warehouse']
+            },
+            palletId: {
+                label: 'ID de pallet',
+                es: ['id de pallet', 'id de palet', 'id pallet', 'identificador de pallet', 'pallet', 'palet'],
+                en: ['pallet id', 'pallet', 'license plate']
+            },
+            serialNumber: {
+                label: 'Número de serie',
+                es: ['numero de serie'],
+                en: ['serial number']
+            },
+            physicalInventory: {
+                label: 'Inventario físico',
+                es: ['inventario fisico', 'existencias fisicas', 'stock fisico'],
+                en: ['physical inventory', 'physical stock']
+            },
+            reserved: {
+                label: 'Física reservada',
+                es: ['fisica reservada', 'reservada fisica', 'reservado fisico'],
+                en: ['physical reserved', 'reserved physical']
+            },
+            available: {
+                label: 'Física disponible',
+                es: ['fisica disponible', 'disponible fisica', 'disponible fisico'],
+                en: ['available physical', 'physical available']
+            },
+            totalOrder: {
+                label: 'Pedido en total',
+                es: ['pedido en total', 'total pedido'],
+                en: ['ordered in total', 'total ordered']
+            },
+            inOrder: {
+                label: 'En pedido',
+                es: ['en pedido'],
+                en: ['on order']
+            },
+            reservedOrder: {
+                label: 'Ordenada reservada',
+                es: ['ordenada reservada', 'pedida reservada', 'reservada ordenada'],
+                en: ['ordered reserved', 'reserved ordered']
+            },
+            totalAvailable: {
+                label: 'Total disponible',
+                es: ['total disponible', 'disponible total'],
+                en: ['total available', 'available total']
+            }
+        };
+        const REQUIRED_FIELDS = ['code', 'physicalInventory'];
+        const HEADER_SCAN_ROWS = 25;
+
+        /**
+         * Puntuar qué tan bien coincide un encabezado con un alias
+         */
+        function scoreHeader(header, alias) {
+            if (!header) return 0;
+            if (header === alias) return 1000 + alias.length;
+            // Coincidencia por palabras completas: "inventario fisico (uds)" o "codigo de articulo"
+            if ((' ' + header + ' ').indexOf(' ' + alias + ' ') !== -1) return 500 + alias.length;
+            return 0;
+        }
+
+        /**
+         * Relacionar una fila de encabezados con los campos del sistema
+         * @param {Array} row - Fila candidata a encabezado
+         * @returns {Object} - indices por campo, número de aciertos e idioma
+         */
+        function mapHeaderRow(row) {
+            const normalize = InventorySystem.Utils.normalizeText;
+            const headers = (row || []).map(normalize);
+            const candidates = [];
+
+            Object.keys(COLUMN_ALIASES).forEach(field => {
+                ['es', 'en'].forEach(lang => {
+                    COLUMN_ALIASES[field][lang].forEach(alias => {
+                        headers.forEach((header, index) => {
+                            const score = scoreHeader(header, alias);
+                            if (score > 0) candidates.push({ field, lang, index, score });
+                        });
+                    });
+                });
+            });
+
+            // Mejor coincidencia primero; en empate gana la columna más a la izquierda
+            // (Axapta puede repetir "Inventario físico" / "Physical stock")
+            candidates.sort((a, b) => b.score - a.score || a.index - b.index);
+
+            const indices = {};
+            const usedColumns = {};
+            const langHits = { es: 0, en: 0 };
+            candidates.forEach(c => {
+                if (indices[c.field] !== undefined || usedColumns[c.index]) return;
+                indices[c.field] = c.index;
+                usedColumns[c.index] = true;
+                langHits[c.lang]++;
+            });
+
+            Object.keys(COLUMN_ALIASES).forEach(field => {
+                if (indices[field] === undefined) indices[field] = -1;
+            });
+
+            return {
+                indices,
+                matched: langHits.es + langHits.en,
+                language: langHits.en > langHits.es ? 'en' : 'es'
+            };
+        }
+
+        /**
+         * Buscar la fila de encabezados dentro de una hoja.
+         * No tiene que ser la primera: se revisan las primeras filas.
+         */
+        function findHeader(rows) {
+            let best = null;
+            const limit = Math.min(rows.length, HEADER_SCAN_ROWS);
+            for (let i = 0; i < limit; i++) {
+                const mapping = mapHeaderRow(rows[i]);
+                if (!best || mapping.matched > best.matched) {
+                    best = mapping;
+                    best.rowIndex = i;
+                }
+            }
+            if (best) {
+                best.missingRequired = REQUIRED_FIELDS.filter(f => best.indices[f] === -1);
+                best.valid = best.missingRequired.length === 0;
+            }
+            return best;
+        }
+
         /**
          * Inicializar el módulo de inventario
          */
         function init() {
-            // Configurar event listeners
             setupEventListeners();
         }
-        
+
         /**
          * Configurar event listeners para inventario
          */
         function setupEventListeners() {
-            // Eventos de carga de archivos
-            fileInput.addEventListener('change', handleFileSelect);
-            uploadBtn.addEventListener('click', uploadFile);
-        }
-        
-        /**
-         * Manejar selección de archivo
-         * @param {Event} e - Evento de cambio
-         */
-        function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if (file) {
-                fileName.textContent = file.name;
-            } else {
-                fileName.textContent = 'Ningún archivo seleccionado';
+            // Al elegir un archivo se analiza directamente, sin un segundo botón
+            fileInput.addEventListener('change', function() {
+                const file = fileInput.files[0];
+                if (file) loadFile(file);
+                // Permite volver a elegir el mismo archivo después de corregirlo
+                fileInput.value = '';
+            });
+
+            if (clearDataBtn) clearDataBtn.addEventListener('click', clearData);
+
+            // Arrastrar y soltar en cualquier punto de la página
+            let dragDepth = 0;
+            const hasFiles = e => e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') !== -1;
+
+            window.addEventListener('dragenter', e => {
+                if (!hasFiles(e)) return;
+                e.preventDefault();
+                dragDepth++;
+                document.body.classList.add('is-dragging');
+            });
+            window.addEventListener('dragover', e => {
+                if (hasFiles(e)) e.preventDefault();
+            });
+            window.addEventListener('dragleave', e => {
+                if (!hasFiles(e)) return;
+                dragDepth = Math.max(0, dragDepth - 1);
+                if (dragDepth === 0) document.body.classList.remove('is-dragging');
+            });
+            window.addEventListener('drop', e => {
+                if (!hasFiles(e)) return;
+                e.preventDefault();
+                dragDepth = 0;
+                document.body.classList.remove('is-dragging');
+                const file = e.dataTransfer.files[0];
+                if (file) loadFile(file);
+            });
+
+            // Botones "Elegir archivo" / "Cambiar archivo" y clic en el área de carga
+            document.querySelectorAll('.js-pick-file').forEach(button => {
+                button.addEventListener('click', e => {
+                    e.stopPropagation();
+                    fileInput.click();
+                });
+            });
+            if (dropzone) {
+                dropzone.addEventListener('click', () => fileInput.click());
             }
         }
-        
+
         /**
          * Realizar un hard refresh completo del sistema
          * Limpia todos los datos, gráficos, tablas y estados
@@ -200,166 +386,271 @@
         }
         
         /**
-         * Cargar archivo de inventario
+         * Compatibilidad: abrir el selector de archivo
          */
         function uploadFile() {
-            const file = fileInput.files[0];
-            if (!file) {
-                InventorySystem.Utils.showError('Por favor, seleccione un archivo');
+            fileInput.click();
+        }
+
+        /**
+         * Leer y analizar un archivo de inventario
+         * @param {File} file - Archivo elegido o soltado
+         */
+        function loadFile(file) {
+            if (!/\.(xlsx|xlsm|xls|csv)$/i.test(file.name)) {
+                InventorySystem.Utils.showError(
+                    'Ese archivo no es un Excel',
+                    'Use la exportación de Axapta en formato .xlsx, .xls o .csv.'
+                );
                 return;
             }
-            
+            if (typeof XLSX === 'undefined') {
+                InventorySystem.Utils.showError(
+                    'No se pudo cargar el lector de Excel',
+                    'Revise la conexión a internet y recargue la página.'
+                );
+                return;
+            }
+
             InventorySystem.Utils.showLoading(true);
-            
-            // HARD REFRESH: Limpiar completamente antes de cargar nuevos datos
-            performHardRefresh();
-            
+
             const reader = new FileReader();
             reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {
-                        type: 'array',
-                        cellDates: true
-                    });
-                    
-                    // Obtener la primera hoja
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    
-                    // Convertir a JSON
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
-                        header: 1,
-                        defval: null
-                    });
-                    
-                    // Procesar los datos
-                    processInventoryData(jsonData);
-                    
-                    // Guardar datos en localStorage
-                    saveData();
-                    
-                    // Mostrar éxito
-                    InventorySystem.Utils.showSuccess('Archivo cargado exitosamente');
-                } catch (error) {
-                    console.error('Error al procesar el archivo:', error);
-                    InventorySystem.Utils.showError('Error al procesar el archivo');
-                } finally {
-                    InventorySystem.Utils.showLoading(false);
-                }
+                // Dejar que el navegador pinte el indicador de carga antes del trabajo pesado
+                setTimeout(function() {
+                    try {
+                        const workbook = XLSX.read(new Uint8Array(e.target.result), {
+                            type: 'array',
+                            cellDates: true
+                        });
+
+                        // Usar la primera hoja que tenga los encabezados esperados
+                        let chosen = null;
+                        let bestAttempt = null;
+                        for (let s = 0; s < workbook.SheetNames.length; s++) {
+                            const sheetName = workbook.SheetNames[s];
+                            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+                                header: 1,
+                                defval: null
+                            });
+                            if (!rows || rows.length === 0) continue;
+                            const header = findHeader(rows);
+                            if (!header) continue;
+                            const attempt = { sheetName, rows, header };
+                            if (!bestAttempt || header.matched > bestAttempt.header.matched) bestAttempt = attempt;
+                            if (header.valid) { chosen = attempt; break; }
+                        }
+
+                        if (!chosen) {
+                            reportUnreadableFile(bestAttempt);
+                            return;
+                        }
+
+                        const items = buildItems(chosen.rows, chosen.header);
+                        if (items.length === 0) {
+                            InventorySystem.Utils.showError(
+                                'El archivo no tiene filas de inventario',
+                                'Se encontraron los encabezados, pero ninguna fila con código de artículo.'
+                            );
+                            return;
+                        }
+
+                        // Solo ahora, con un archivo válido, se reemplazan los datos anteriores
+                        performHardRefresh();
+                        inventoryData = items;
+                        lastUpdate = new Date();
+                        sourceInfo = describeSource(file.name, chosen, items.length);
+
+                        showData();
+                        saveData();
+
+                        const optionalMissing = sourceInfo.missingOptional.length;
+                        InventorySystem.Utils.showSuccess(
+                            'Archivo analizado: ' + InventorySystem.Utils.formatNumber(items.length) + ' filas',
+                            optionalMissing > 0
+                                ? 'No venían ' + optionalMissing + ' columnas opcionales; se tratan como 0.'
+                                : 'Formato de Axapta en ' + sourceInfo.languageLabel + '.'
+                        );
+                    } catch (error) {
+                        console.error('Error al procesar el archivo:', error);
+                        InventorySystem.Utils.showError(
+                            'No se pudo leer el archivo',
+                            'Puede estar dañado o protegido. Vuelva a exportarlo desde Axapta e inténtelo de nuevo.'
+                        );
+                    } finally {
+                        InventorySystem.Utils.showLoading(false);
+                    }
+                }, 30);
             };
-            
+
             reader.onerror = function() {
-                InventorySystem.Utils.showError('Error al leer el archivo');
+                InventorySystem.Utils.showError('No se pudo leer el archivo', 'Compruebe que no esté abierto en Excel.');
                 InventorySystem.Utils.showLoading(false);
             };
-            
+
             reader.readAsArrayBuffer(file);
         }
-        
+
         /**
-         * Procesar datos de inventario
-         * @param {Array} data - Datos del archivo
+         * Explicar por qué no se pudo usar un archivo
          */
-        function processInventoryData(data) {
-    if (!data || data.length < 2) {
-        InventorySystem.Utils.showError('El archivo está vacío o no tiene datos suficientes');
-        return;
-    }
-    
-    // Obtener encabezados
-    const headers = data[0];
-    
-    // Encontrar índices de columnas importantes
-    const columnIndices = {
-        code: headers.findIndex(h => h && h.toString().toLowerCase().includes('código')),
-        name: headers.findIndex(h => h && h.toString().toLowerCase().includes('nombre del producto')),
-        searchName: headers.findIndex(h => h && h.toString().toLowerCase().includes('nombre de búsqueda')),
-        warehouse: headers.findIndex(h => h && h.toString().toLowerCase().includes('almacén')),
-        palletId: headers.findIndex(h => h && h.toString().toLowerCase().includes('id de pallet')),
-        serialNumber: headers.findIndex(h => h && h.toString().toLowerCase().includes('número de serie')),
-        physicalInventory: headers.findIndex(h => h && h.toString().toLowerCase().includes('inventario físico')),
-        reserved: headers.findIndex(h => h && h.toString().toLowerCase().includes('física reservada')),
-        available: headers.findIndex(h => h && h.toString().toLowerCase().includes('física disponible')),
-        totalOrder: headers.findIndex(h => h && h.toString().toLowerCase().includes('pedido en total')),
-        inOrder: headers.findIndex(h => h && h.toString().toLowerCase().includes('en pedido')),
-        reservedOrder: headers.findIndex(h => h && h.toString().toLowerCase().includes('ordenada reservada')),
-        totalAvailable: headers.findIndex(h => h && h.toString().toLowerCase().includes('total disponible'))
-    };
-    
-    // Verificar columnas necesarias
-    if (columnIndices.code === -1 || columnIndices.physicalInventory === -1) {
-        InventorySystem.Utils.showError('El archivo no contiene las columnas necesarias');
-        return;
-    }
-    
-    // Procesar filas (saltando la primera que son los encabezados)
-    inventoryData = [];
-    for (let i = 1; i < data.length; i++) {
-        const row = data[i];
-        if (!row || row.length === 0 || row[columnIndices.code] === null) {
-            continue; // Saltar filas vacías
+        function reportUnreadableFile(attempt) {
+            if (!attempt || attempt.header.matched === 0) {
+                InventorySystem.Utils.showError(
+                    'No se reconocen las columnas del archivo',
+                    'Se espera la exportación de stock de Axapta, en español o en inglés, con columnas como ' +
+                    '"Código" / "Item number" e "Inventario físico" / "Physical stock".'
+                );
+                return;
+            }
+            const englishNames = { code: 'Item number', physicalInventory: 'Physical stock' };
+            const missing = attempt.header.missingRequired.map(field =>
+                '"' + COLUMN_ALIASES[field].label + '" (en inglés "' + englishNames[field] + '")'
+            );
+            InventorySystem.Utils.showError(
+                missing.length === 1 ? 'Falta una columna obligatoria' : 'Faltan columnas obligatorias',
+                'No se encontró ' + missing.join(' ni ') + '. Añádala a la exportación de Axapta y cargue el archivo de nuevo.'
+            );
         }
-        
-        // Obtener valores de columnas numéricas
-        const physicalInventoryVal = columnIndices.physicalInventory !== -1 ? row[columnIndices.physicalInventory] : null;
-        const reservedVal = columnIndices.reserved !== -1 ? row[columnIndices.reserved] : null;
-        const availableVal = columnIndices.available !== -1 ? row[columnIndices.available] : null;
-        const totalOrderVal = columnIndices.totalOrder !== -1 ? row[columnIndices.totalOrder] : null;
-        const inOrderVal = columnIndices.inOrder !== -1 ? row[columnIndices.inOrder] : null;
-        const reservedOrderVal = columnIndices.reservedOrder !== -1 ? row[columnIndices.reservedOrder] : null;
-        const totalAvailableVal = columnIndices.totalAvailable !== -1 ? row[columnIndices.totalAvailable] : null;
-        
-        const item = {
-            id: i,
-            code: row[columnIndices.code],
-            name: columnIndices.name !== -1 ? row[columnIndices.name] : '',
-            searchName: columnIndices.searchName !== -1 ? row[columnIndices.searchName] : '',
-            warehouse: columnIndices.warehouse !== -1 ? 
-                InventorySystem.Utils.sanitizeWarehouse(row[columnIndices.warehouse]) : '',
-            palletId: columnIndices.palletId !== -1 ? row[columnIndices.palletId] : '',
-            serialNumber: columnIndices.serialNumber !== -1 ? row[columnIndices.serialNumber] : '',
-            physicalInventory: InventorySystem.Utils.isValidNumber(physicalInventoryVal) ? 
-                              parseFloat(physicalInventoryVal) : 0,
-            reserved: InventorySystem.Utils.isValidNumber(reservedVal) ? 
-                     parseFloat(reservedVal) : 0,
-            available: InventorySystem.Utils.isValidNumber(availableVal) ? 
-                      parseFloat(availableVal) : 0,
-            totalOrder: InventorySystem.Utils.isValidNumber(totalOrderVal) ? 
-                       parseFloat(totalOrderVal) : 0,
-            inOrder: InventorySystem.Utils.isValidNumber(inOrderVal) ? 
-                    parseFloat(inOrderVal) : 0,
-            reservedOrder: InventorySystem.Utils.isValidNumber(reservedOrderVal) ? 
-                          parseFloat(reservedOrderVal) : 0,
-            totalAvailable: InventorySystem.Utils.isValidNumber(totalAvailableVal) ? 
-                           parseFloat(totalAvailableVal) : 0
-        };
-        
-        inventoryData.push(item);
-    }
-    
-    // Actualizar fecha de última actualización
-    lastUpdate = new Date();
-    lastUpdateEl.textContent = `Última actualización: ${InventorySystem.Utils.formatDate(lastUpdate)}`;
-    
-    // Analizar datos
-    analyzeData();
-    
-    // Actualizar filtros de almacén
-    if (typeof InventorySystem.UI !== 'undefined') {
-        InventorySystem.UI.updateWarehouseFilters();
-    }
-    
-    // Renderizar datos
-    if (typeof InventorySystem.UI !== 'undefined') {
-        InventorySystem.UI.switchTab('negative-inventory');
-    }
-    
-    // Inicializar la funcionalidad de exportación
-    if (typeof InventorySystem.Export !== 'undefined') {
-        InventorySystem.Export.init();
-    }
-}
-        
+
+        /**
+         * Convertir las filas de la hoja en registros de inventario
+         */
+        function buildItems(rows, header) {
+            const idx = header.indices;
+            const locale = header.language;
+            const parseNumber = InventorySystem.Utils.parseNumber;
+
+            const text = (row, index) => {
+                if (index === -1) return '';
+                const value = row[index];
+                if (value === null || value === undefined) return '';
+                return typeof value === 'string' ? value.trim() : value;
+            };
+            const number = (row, index) => index === -1 ? 0 : parseNumber(row[index], locale);
+
+            const items = [];
+            for (let i = header.rowIndex + 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+
+                const code = text(row, idx.code);
+                if (code === '') continue; // Filas vacías o de totales
+
+                items.push({
+                    id: i,
+                    code: code,
+                    name: String(text(row, idx.name)),
+                    searchName: String(text(row, idx.searchName)),
+                    warehouse: idx.warehouse !== -1 ?
+                        InventorySystem.Utils.sanitizeWarehouse(row[idx.warehouse]) : '',
+                    palletId: text(row, idx.palletId),
+                    serialNumber: text(row, idx.serialNumber),
+                    physicalInventory: number(row, idx.physicalInventory),
+                    reserved: number(row, idx.reserved),
+                    available: number(row, idx.available),
+                    totalOrder: number(row, idx.totalOrder),
+                    inOrder: number(row, idx.inOrder),
+                    reservedOrder: number(row, idx.reservedOrder),
+                    totalAvailable: number(row, idx.totalAvailable)
+                });
+            }
+            return items;
+        }
+
+        /**
+         * Resumen del archivo cargado para mostrarlo en pantalla
+         */
+        function describeSource(name, chosen, rowCount) {
+            const fields = Object.keys(COLUMN_ALIASES);
+            const found = fields.filter(f => chosen.header.indices[f] !== -1);
+            const missingOptional = fields
+                .filter(f => chosen.header.indices[f] === -1 && f !== 'serialNumber')
+                .map(f => COLUMN_ALIASES[f].label);
+            return {
+                fileName: name,
+                sheetName: chosen.sheetName,
+                language: chosen.header.language,
+                languageLabel: chosen.header.language === 'en' ? 'inglés' : 'español',
+                headerRow: chosen.header.rowIndex + 1,
+                rowCount: rowCount,
+                foundCount: found.length,
+                missingOptional: missingOptional
+            };
+        }
+
+        /**
+         * Pintar en pantalla los datos que están en memoria
+         */
+        function showData() {
+            document.body.classList.add('has-data');
+            renderFileSummary();
+
+            analyzeData();
+
+            if (typeof InventorySystem.UI !== 'undefined') {
+                InventorySystem.UI.updateWarehouseFilters();
+                InventorySystem.UI.switchTab('negative-inventory');
+            }
+
+            if (typeof InventorySystem.Export !== 'undefined') {
+                InventorySystem.Export.init();
+            }
+        }
+
+        /**
+         * Mostrar qué archivo está cargado y cómo se interpretó
+         */
+        function renderFileSummary() {
+            lastUpdateEl.textContent = lastUpdate ?
+                'Cargado el ' + InventorySystem.Utils.formatDate(lastUpdate) : '';
+            if (!fileSummary) return;
+
+            fileSummary.textContent = '';
+            if (!sourceInfo) {
+                fileName.textContent = 'Inventario guardado';
+                return;
+            }
+
+            fileName.textContent = sourceInfo.fileName;
+
+            const facts = [
+                InventorySystem.Utils.formatNumber(sourceInfo.rowCount) + ' filas',
+                'Axapta en ' + sourceInfo.languageLabel,
+                sourceInfo.foundCount + ' columnas reconocidas'
+            ];
+            if (sourceInfo.headerRow > 1) facts.push('encabezados en la fila ' + sourceInfo.headerRow);
+
+            facts.forEach(fact => {
+                const chip = document.createElement('span');
+                chip.className = 'file-fact';
+                chip.textContent = fact;
+                fileSummary.appendChild(chip);
+            });
+
+            if (sourceInfo.missingOptional.length > 0) {
+                const warn = document.createElement('span');
+                warn.className = 'file-fact file-fact-warn';
+                warn.textContent = 'Sin ' + sourceInfo.missingOptional.join(', ');
+                warn.title = 'Estas columnas no venían en el archivo; sus valores se muestran como 0.';
+                fileSummary.appendChild(warn);
+            }
+        }
+
+        /**
+         * Quitar el inventario cargado y volver a la pantalla inicial
+         */
+        function clearData() {
+            performHardRefresh();
+            lastUpdate = null;
+            sourceInfo = null;
+            document.body.classList.remove('has-data');
+            lastUpdateEl.textContent = '';
+            if (fileSummary) fileSummary.textContent = '';
+            deleteSavedData();
+            InventorySystem.Utils.showToast('info', 'Inventario quitado', 'Cargue otro archivo cuando quiera.');
+        }
+
         /**
          * Analizar datos para estadísticas y resúmenes
          */
@@ -455,68 +746,70 @@
             });
         }
         
-        /**
-         * Guardar datos en localStorage
-         */
-        function saveData() {
-            try {
-                // Guardar solo una parte de los datos para no exceder el límite de localStorage
-                const dataToSave = {
-                    inventoryData: inventoryData.slice(0, 1000), // Limitar a 1000 productos
-                    lastUpdate: lastUpdate ? lastUpdate.toISOString() : null
-                };
-                
-                localStorage.setItem('inventoryData', JSON.stringify(dataToSave));
-            } catch (error) {
-                console.error('Error al guardar datos:', error);
-            }
+        /* ---------- Guardado local (IndexedDB) ----------
+         * Se guarda el inventario completo para que siga ahí al recargar.
+         * Los datos no salen del navegador. */
+        const DB_NAME = 'analisis-inventario';
+        const STORE_NAME = 'estado';
+
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) { reject(new Error('IndexedDB no disponible')); return; }
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = () => request.result.createObjectStore(STORE_NAME);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
         }
-        
+
+        function saveData() {
+            // La versión anterior guardaba aquí solo las primeras 1000 filas
+            try { localStorage.removeItem('inventoryData'); } catch (e) { /* sin acceso */ }
+
+            openDatabase().then(db => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put({
+                    inventoryData: inventoryData,
+                    lastUpdate: lastUpdate ? lastUpdate.toISOString() : null,
+                    sourceInfo: sourceInfo
+                }, 'actual');
+                tx.oncomplete = () => db.close();
+            }).catch(error => console.warn('No se pudo guardar el inventario en este navegador:', error));
+        }
+
+        function deleteSavedData() {
+            try { localStorage.removeItem('inventoryData'); } catch (e) { /* sin acceso */ }
+            openDatabase().then(db => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).delete('actual');
+                tx.oncomplete = () => db.close();
+            }).catch(() => {});
+        }
+
         /**
          * Cargar datos guardados
          */
         function loadSavedData() {
-            try {
-                const savedData = localStorage.getItem('inventoryData');
-                if (savedData) {
-                    const parsedData = JSON.parse(savedData);
-                    inventoryData = parsedData.inventoryData || [];
-                    lastUpdate = parsedData.lastUpdate ? new Date(parsedData.lastUpdate) : null;
-                    
-                    if (lastUpdate) {
-                        lastUpdateEl.textContent = `Última actualización: ${InventorySystem.Utils.formatDate(lastUpdate)}`;
+            openDatabase().then(db => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const request = tx.objectStore(STORE_NAME).get('actual');
+                request.onsuccess = () => {
+                    db.close();
+                    const saved = request.result;
+                    // No pisar un archivo que el usuario haya cargado mientras tanto
+                    if (!saved || !saved.inventoryData || saved.inventoryData.length === 0 || inventoryData.length > 0) return;
+                    try {
+                        inventoryData = saved.inventoryData;
+                        lastUpdate = saved.lastUpdate ? new Date(saved.lastUpdate) : null;
+                        sourceInfo = saved.sourceInfo || null;
+                        showData();
+                    } catch (error) {
+                        console.error('Error al mostrar datos guardados:', error);
                     }
-                    
-                    if (inventoryData.length > 0) {
-                        // Analizar datos
-                        analyzeData();
-                        
-                        // Actualizar filtros de almacén
-                        if (typeof InventorySystem.UI !== 'undefined') {
-                            InventorySystem.UI.updateWarehouseFilters();
-                        }
-                        
-                        // Mostrar análisis si hay un usuario
-                        if (InventorySystem.Auth && InventorySystem.Auth.getCurrentUser()) {
-                            document.getElementById('inventory-analysis').classList.remove('hidden');
-                        }
-                        
-                        // Renderizar datos
-                        if (typeof InventorySystem.UI !== 'undefined') {
-                            InventorySystem.UI.switchTab('negative-inventory');
-                        }
-                        
-                        // Inicializar la funcionalidad de exportación
-                        if (typeof InventorySystem.Export !== 'undefined') {
-                            InventorySystem.Export.init();
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error al cargar datos guardados:', error);
-            }
+                };
+            }).catch(error => console.warn('Sin datos guardados:', error));
         }
-        
+
         /**
          * Obtener datos de inventario
          */
@@ -558,6 +851,9 @@
         return {
             init,
             uploadFile,
+            loadFile,
+            clearData,
+            getSourceInfo: function() { return sourceInfo; },
             analyzeData,
             loadSavedData,
             getInventoryData,

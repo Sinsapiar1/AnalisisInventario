@@ -7,26 +7,87 @@
     // Módulo de UI
     InventorySystem.UI = (function() {
         // Variables privadas
-        const ITEMS_PER_PAGE = 10;
+        const PAGE_SIZES = [10, 25, 50, 100];
+        let pageSize = 25;
         let currentPage = {
             negative: 1,
             pallet: 1,
             all: 1
         };
-        
+
+        // Orden de cada tabla. key null = orden original del archivo
+        const sortState = {
+            negative: { key: 'totalNegative', dir: 'asc' },
+            pallet: { key: 'negativeProducts', dir: 'desc' },
+            all: { key: null, dir: 'asc' }
+        };
+
+        const fmt = n => InventorySystem.Utils.formatNumber(n);
+
+        // Columnas de cada tabla: de aquí salen los encabezados, las celdas y el orden
+        const COLUMNS = {
+            negative: [
+                { key: 'code', label: 'Código', value: p => p.code },
+                { key: 'name', label: 'Nombre', value: p => p.name || '' },
+                { key: 'warehouses', label: 'Almacenes', value: p => Array.from(p.warehouses).sort().join(', ') },
+                { key: 'palletCount', label: 'Pallets', numeric: true, value: p => p.palletCount },
+                { key: 'totalNegative', label: 'Balance total', numeric: true, value: p => p.totalNegative, signed: true },
+                { key: 'totalAvailable', label: 'Disponible', numeric: true, value: p => p.totalAvailable, signed: true },
+                { key: null, label: 'Detalle', action: p => ({ text: 'Ver detalle', label: 'Ver detalle de ' + p.code, run: () => showProductDetailedView(p.code) }) }
+            ],
+            pallet: [
+                { key: 'palletId', label: 'ID de pallet', value: p => p.palletId },
+                { key: 'productCount', label: 'Productos', numeric: true, value: p => p.products.length },
+                { key: 'negativeProducts', label: 'Productos negativos', numeric: true, value: p => p.negativeProducts, badge: true },
+                { key: 'totalInventory', label: 'Inventario total', numeric: true, value: p => p.totalInventory, signed: true },
+                { key: null, label: 'Detalle', action: p => ({ text: 'Ver productos', label: 'Ver productos del pallet ' + p.palletId, run: () => showPalletDetails(p.palletId) }) }
+            ],
+            all: [
+                { key: 'code', label: 'Código', value: i => i.code },
+                { key: 'name', label: 'Nombre', value: i => i.name || '' },
+                { key: 'warehouse', label: 'Almacén', value: i => i.warehouse || '' },
+                { key: 'palletId', label: 'ID de pallet', value: i => i.palletId || '', empty: 'Sin pallet' },
+                { key: 'physicalInventory', label: 'Inventario físico', numeric: true, value: i => i.physicalInventory, signed: true },
+                { key: 'available', label: 'Disponible', numeric: true, value: i => i.available, signed: true }
+            ]
+        };
+
+        const EMPTY_TEXT = {
+            negative: { none: 'Ningún producto tiene inventario negativo.', filtered: 'Ningún producto negativo coincide con la búsqueda o los almacenes elegidos.' },
+            pallet: { none: 'El archivo no trae IDs de pallet.', filtered: 'Ningún pallet coincide con la búsqueda.' },
+            all: { none: 'No hay filas de inventario.', filtered: 'Ninguna fila coincide con la búsqueda y los filtros.' }
+        };
+        const NOUNS = {
+            negative: ['producto', 'productos'],
+            pallet: ['pallet', 'pallets'],
+            all: ['fila', 'filas']
+        };
+
         // Elementos DOM para pestañas
         const tabs = document.querySelectorAll('.tab');
-        
-        // Elementos de tabla
-        const negativeInventoryTable = document.getElementById('negative-inventory-table').querySelector('tbody');
-        const palletAnalysisTable = document.getElementById('pallet-analysis-table').querySelector('tbody');
-        const allInventoryTable = document.getElementById('all-inventory-table').querySelector('tbody');
-        
-        // Elementos de paginación
-        const negativePagination = document.getElementById('negative-pagination');
-        const palletPagination = document.getElementById('pallet-pagination');
-        const allPagination = document.getElementById('all-pagination');
-        
+
+        // Tablas
+        const tables = {
+            negative: document.getElementById('negative-inventory-table'),
+            pallet: document.getElementById('pallet-analysis-table'),
+            all: document.getElementById('all-inventory-table')
+        };
+        const bodies = {
+            negative: tables.negative.querySelector('tbody'),
+            pallet: tables.pallet.querySelector('tbody'),
+            all: tables.all.querySelector('tbody')
+        };
+        const paginations = {
+            negative: document.getElementById('negative-pagination'),
+            pallet: document.getElementById('pallet-pagination'),
+            all: document.getElementById('all-pagination')
+        };
+        const counts = {
+            negative: document.getElementById('negative-count'),
+            pallet: document.getElementById('pallet-count'),
+            all: document.getElementById('all-count')
+        };
+
         // Elementos de búsqueda y filtro
         const negativeSearch = document.getElementById('negative-search');
         const palletSearch = document.getElementById('pallet-search');
@@ -34,52 +95,85 @@
         const negativeWarehouseFilter = document.getElementById('negative-warehouse-filter');
         const allWarehouseFilter = document.getElementById('all-warehouse-filter');
         const allStatusFilter = document.getElementById('all-status-filter');
-        
+
         // Instancias de multi-select
         let negativeWarehouseMultiSelect = null;
         let allWarehouseMultiSelect = null;
-        
+
         /**
          * Inicializar el módulo de UI
          */
         function init() {
-            // Configurar event listeners para las pestañas
+            try {
+                const saved = parseInt(localStorage.getItem('pageSize'), 10);
+                if (PAGE_SIZES.indexOf(saved) !== -1) pageSize = saved;
+            } catch (e) { /* sin acceso a localStorage */ }
+
             setupTabEventListeners();
-            
-            // Configurar event listeners para búsqueda y filtros
             setupSearchFilterEventListeners();
-            
-            // Inicializar multi-selects (se inicializarán cuando haya datos)
-            // Se inicializan en updateWarehouseFilters()
+            setupPageSizeSelectors();
+            Object.keys(COLUMNS).forEach(renderTableHead);
+
+            // Cerrar el detalle abierto con Escape
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') closeModals();
+            });
         }
-        
+
         /**
          * Configurar event listeners para las pestañas
          */
         function setupTabEventListeners() {
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    switchTab(tabId);
+                    switchTab(tab.getAttribute('data-tab'));
                 });
             });
         }
-        
+
         /**
          * Configurar event listeners para búsqueda y filtros
          */
         function setupSearchFilterEventListeners() {
-            // Eventos de búsqueda
-            negativeSearch.addEventListener('input', filterNegativeInventory);
-            palletSearch.addEventListener('input', filterPalletAnalysis);
-            allSearch.addEventListener('input', filterAllInventory);
-            
-            // Eventos de filtro de estado (el de almacén lo maneja el multi-select)
+            const debounce = InventorySystem.Utils.debounce;
+            // Cada filtro limpia la vista completa, así que solo se aplica si su pestaña sigue abierta
+            const whenActive = (tabId, fn) => debounce(() => {
+                const content = document.getElementById(tabId + '-content');
+                if (content && content.classList.contains('active')) fn();
+            }, 180);
+            negativeSearch.addEventListener('input', whenActive('negative-inventory', filterNegativeInventory));
+            palletSearch.addEventListener('input', whenActive('pallet-analysis', filterPalletAnalysis));
+            allSearch.addEventListener('input', whenActive('all-inventory', filterAllInventory));
+
+            // El filtro de almacén lo maneja el multi-select (ver updateWarehouseFilters)
             allStatusFilter.addEventListener('change', filterAllInventory);
-            
-            // NOTA: Los filtros de almacén ahora son multi-select y se manejan en updateWarehouseFilters()
         }
-        
+
+        /**
+         * Selectores de filas por página (uno por tabla, sincronizados)
+         */
+        function setupPageSizeSelectors() {
+            const selects = document.querySelectorAll('.page-size-select');
+            selects.forEach(select => {
+                select.innerHTML = '';
+                PAGE_SIZES.forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = size + ' por página';
+                    select.appendChild(option);
+                });
+                select.value = pageSize;
+                select.addEventListener('change', () => {
+                    pageSize = parseInt(select.value, 10);
+                    try { localStorage.setItem('pageSize', pageSize); } catch (e) { /* sin acceso */ }
+                    selects.forEach(other => { other.value = pageSize; });
+                    Object.keys(currentPage).forEach(type => { currentPage[type] = 1; });
+                    const type = select.getAttribute('data-table');
+                    refreshPageContent(type);
+                });
+            });
+        }
+
         /**
          * Cambiar pestaña
          * @param {string} tabId - ID de la pestaña a mostrar
@@ -87,21 +181,20 @@
         function switchTab(tabId) {
             // Limpiar vista antes de cambiar de pestaña
             resetInventoryView();
-            
+
             // Actualizar pestañas activas
             tabs.forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.getAttribute('data-tab') === tabId) {
-                    tab.classList.add('active');
-                }
+                const active = tab.getAttribute('data-tab') === tabId;
+                tab.classList.toggle('active', active);
+                tab.setAttribute('aria-selected', active ? 'true' : 'false');
             });
-            
+
             // Actualizar contenido de pestañas
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
             document.getElementById(tabId + '-content').classList.add('active');
-            
+
             // Actualizar datos según la pestaña
             if (tabId === 'negative-inventory') {
                 filterNegativeInventory();
@@ -115,78 +208,256 @@
                 }
             }
         }
-        
+
+        /* ---------- Orden ---------- */
+
+        function compareValues(a, b) {
+            const aNum = typeof a === 'number';
+            const bNum = typeof b === 'number';
+            if (aNum && bNum) return a - b;
+            return String(a).localeCompare(String(b), 'es', { numeric: true, sensitivity: 'base' });
+        }
+
         /**
-         * Filtrar inventario negativo
+         * Ordenar una lista según el estado de orden de su tabla
          */
-                /**
+        function applySort(type, list) {
+            const state = sortState[type];
+            if (!state.key) return list;
+            const column = COLUMNS[type].find(c => c.key === state.key);
+            if (!column) return list;
+            const factor = state.dir === 'asc' ? 1 : -1;
+            return list
+                .map((item, index) => ({ item, index, value: column.value(item) }))
+                .sort((a, b) => factor * compareValues(a.value, b.value) || a.index - b.index)
+                .map(entry => entry.item);
+        }
+
+        function toggleSort(type, key) {
+            const state = sortState[type];
+            const column = COLUMNS[type].find(c => c.key === key);
+            if (state.key === key) {
+                state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.key = key;
+                // Los números empiezan de mayor a menor; los textos, de la A a la Z
+                state.dir = column && column.numeric ? 'desc' : 'asc';
+            }
+            if (type === 'negative') filterNegativeInventory();
+            else if (type === 'pallet') filterPalletAnalysis();
+            else filterAllInventory();
+
+            // Los encabezados se redibujan: devolver el foco al botón pulsado
+            const button = tables[type].querySelector('th[data-key="' + key + '"] .sort-btn');
+            if (button) button.focus();
+        }
+
+        /**
+         * Dibujar los encabezados de una tabla con sus botones de orden
+         */
+        function renderTableHead(type) {
+            const headRow = tables[type].querySelector('thead tr');
+            const state = sortState[type];
+            headRow.innerHTML = '';
+
+            COLUMNS[type].forEach(column => {
+                const th = document.createElement('th');
+                th.scope = 'col';
+                if (column.numeric) th.classList.add('num');
+
+                if (!column.key) {
+                    const hidden = document.createElement('span');
+                    hidden.className = 'sr-only';
+                    hidden.textContent = column.label;
+                    th.appendChild(hidden);
+                } else {
+                    const active = state.key === column.key;
+                    th.setAttribute('data-key', column.key);
+                    th.setAttribute('aria-sort', active ? (state.dir === 'asc' ? 'ascending' : 'descending') : 'none');
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'sort-btn' + (active ? ' is-active' : '');
+                    button.title = 'Ordenar por ' + column.label.toLowerCase();
+
+                    const text = document.createElement('span');
+                    text.textContent = column.label;
+                    const arrow = document.createElement('i');
+                    arrow.setAttribute('aria-hidden', 'true');
+                    arrow.className = 'fas ' + (active ? (state.dir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort');
+
+                    button.appendChild(text);
+                    button.appendChild(arrow);
+                    button.addEventListener('click', () => toggleSort(type, column.key));
+                    th.appendChild(button);
+                }
+                headRow.appendChild(th);
+            });
+        }
+
+        /* ---------- Tablas ---------- */
+
+        /**
+         * Dibujar las filas de la página actual de una tabla
+         * @param {string} type - negative, pallet o all
+         * @param {Array} data - Datos ya filtrados y ordenados
+         * @param {boolean} hasFilters - Si hay búsqueda o filtros activos
+         */
+        function renderTable(type, data) {
+            const body = bodies[type];
+            const columns = COLUMNS[type];
+            body.innerHTML = '';
+            renderTableHead(type);
+
+            if (data.length === 0) {
+                const row = document.createElement('tr');
+                row.className = 'empty-row';
+                const cell = document.createElement('td');
+                cell.colSpan = columns.length;
+                cell.textContent = hasActiveFilters(type) ? EMPTY_TEXT[type].filtered : EMPTY_TEXT[type].none;
+                row.appendChild(cell);
+                body.appendChild(row);
+                return;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
+            if (currentPage[type] > totalPages) currentPage[type] = totalPages;
+            const startIndex = (currentPage[type] - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, data.length);
+            const fragment = document.createDocumentFragment();
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = data[i];
+                const row = document.createElement('tr');
+
+                if (type === 'negative') {
+                    row.classList.add('negative-row');
+                    row.setAttribute('data-product-code', item.code);
+                } else if (type === 'all' && item.physicalInventory < 0) {
+                    row.classList.add('negative-row');
+                }
+
+                columns.forEach(column => {
+                    const cell = document.createElement('td');
+                    cell.setAttribute('data-label', column.label);
+
+                    if (column.action) {
+                        const action = column.action(item);
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'btn btn-quiet';
+                        button.textContent = action.text;
+                        button.setAttribute('aria-label', action.label);
+                        button.addEventListener('click', action.run);
+                        cell.classList.add('cell-action');
+                        cell.appendChild(button);
+                    } else {
+                        const value = column.value(item);
+                        if (column.numeric) {
+                            cell.classList.add('num');
+                            if (column.badge && value > 0) {
+                                const badge = document.createElement('span');
+                                badge.className = 'badge badge-danger';
+                                badge.textContent = fmt(value);
+                                cell.appendChild(badge);
+                            } else {
+                                cell.textContent = fmt(value);
+                                if (column.signed && value < 0) cell.classList.add('is-negative');
+                            }
+                        } else if (value === '' && column.empty) {
+                            cell.textContent = column.empty;
+                            cell.classList.add('is-muted');
+                        } else {
+                            cell.textContent = value;
+                        }
+                    }
+                    row.appendChild(cell);
+                });
+
+                fragment.appendChild(row);
+            }
+            body.appendChild(fragment);
+        }
+
+        function hasActiveFilters(type) {
+            if (type === 'negative') {
+                return negativeSearch.value.trim() !== '' || getSelectedNegativeWarehouses().length > 0;
+            }
+            if (type === 'pallet') return palletSearch.value.trim() !== '';
+            return allSearch.value.trim() !== '' || allStatusFilter.value !== '' || getSelectedAllWarehouses().length > 0;
+        }
+
+        /**
+         * Guardar, dibujar y paginar el resultado de un filtro
+         */
+        function showResults(type, list) {
+            const sorted = applySort(type, list);
+            InventorySystem.Inventory.setFilteredData(type, sorted);
+            currentPage[type] = 1;
+            renderTable(type, sorted);
+            renderPagination(paginations[type], sorted.length, currentPage[type], type);
+            return sorted;
+        }
+
+        /**
          * Filtrar inventario negativo
          */
         function filterNegativeInventory() {
             try {
                 resetInventoryView(); // Limpiar la vista antes de filtrar
-                
-                const searchTerm = negativeSearch.value.toLowerCase();
-                const warehouseFilter = negativeWarehouseFilter.value;
-                
+
+                const searchTerm = negativeSearch.value.trim().toLowerCase();
+
                 if (!window.productBalances) {
-                    console.error('productBalances no está definido. No se puede filtrar inventario negativo.');
-                    InventorySystem.Inventory.setFilteredData('negative', []); // Asegurar que los datos filtrados estén vacíos
-                    renderConsolidatedNegativeTable([]); // Renderizar tabla vacía
-                    renderPagination(negativePagination, 0, 1, 'negative'); // Limpiar paginación
+                    showResults('negative', []);
                     return;
                 }
-                
-                // Paso 1: Obtener todos los 'productBalance' que son negativos en su propio contexto (code-warehouse)
+
+                // Paso 1: balances negativos por código + almacén
                 let initialNegativeProducts = Object.values(window.productBalances)
                     .filter(pb => InventorySystem.Utils.isValidNumber(pb.totalInventory) && parseFloat(pb.totalInventory) < 0);
-                
-                // Paso 2: Aplicar filtros de la UI (búsqueda, almacén) sobre estos 'productBalance'
-                // MULTI-SELECT: Filtrar por múltiples almacenes seleccionados
-                const selectedWarehouses = negativeWarehouseMultiSelect ? 
-                    negativeWarehouseMultiSelect.getSelectedValues() : [];
-                
+
+                // Paso 2: filtros de la UI (almacenes y búsqueda)
+                const selectedWarehouses = getSelectedNegativeWarehouses();
                 if (selectedWarehouses.length > 0) {
-                    initialNegativeProducts = initialNegativeProducts.filter(pb => 
+                    initialNegativeProducts = initialNegativeProducts.filter(pb =>
                         selectedWarehouses.includes(pb.warehouse)
                     );
                 }
-                
-                initialNegativeProducts = initialNegativeProducts.filter(pb => 
-                    searchTerm === '' || 
-                    pb.code.toString().toLowerCase().includes(searchTerm) || 
-                    (pb.name && pb.name.toLowerCase().includes(searchTerm))
+
+                initialNegativeProducts = initialNegativeProducts.filter(pb =>
+                    searchTerm === '' ||
+                    String(pb.code).toLowerCase().includes(searchTerm) ||
+                    String(pb.name || '').toLowerCase().includes(searchTerm)
                 );
-                
-                // Paso 3: Consolidar los 'productBalance' filtrados por CÓDIGO DE PRODUCTO
+
+                // Paso 3: consolidar por código de producto
                 const consolidatedProductsMap = new Map();
-                
-                initialNegativeProducts.forEach(pbProduct => { // pbProduct es un item de productBalances (agrupado por code+warehouse)
+
+                initialNegativeProducts.forEach(pbProduct => {
                     const code = pbProduct.code;
                     let consolidated = consolidatedProductsMap.get(code);
 
                     if (!consolidated) {
                         consolidated = {
                             code: code,
-                            name: pbProduct.name, // Tomar el nombre del primer productBalance encontrado
+                            name: pbProduct.name,
                             totalNegative: 0,
                             totalAvailable: 0,
                             warehouses: new Set(),
-                            palletIds: new Set(), // Usar un Set para contar pallets únicos por producto consolidado
-                            palletCount: 0, // Se calculará al final a partir de palletIds.size
-                            records: [] // Colección de todos los records originales que componen este producto consolidado
+                            palletIds: new Set(),
+                            palletCount: 0,
+                            records: []
                         };
                         consolidatedProductsMap.set(code, consolidated);
                     }
 
-                    // Acumular el balance negativo del productBalance actual
-                    consolidated.totalNegative += pbProduct.totalInventory; // pbProduct.totalInventory ya es el balance de ese code+warehouse
+                    consolidated.totalNegative += pbProduct.totalInventory;
                     consolidated.warehouses.add(pbProduct.warehouse);
 
-                    // Acumular 'records', 'available' y 'palletIds' de los registros individuales
                     if (pbProduct.records && Array.isArray(pbProduct.records)) {
                         pbProduct.records.forEach(record => {
-                            consolidated.records.push(record); // Guardar el record original
+                            consolidated.records.push(record);
                             if (InventorySystem.Utils.isValidNumber(record.available)) {
                                 consolidated.totalAvailable += parseFloat(record.available);
                             }
@@ -197,446 +468,192 @@
                     }
                 });
 
-                // Convertir el Map a un array y calcular palletCount final
-                const finalConsolidatedList = Array.from(consolidatedProductsMap.values()).map(prod => {
-                    prod.palletCount = prod.palletIds.size; // Contar pallets únicos para este producto
-                    delete prod.palletIds; // Eliminar el Set auxiliar si ya no se necesita
-                    return prod;
-                });
+                const consolidatedList = Array.from(consolidatedProductsMap.values())
+                    .map(prod => {
+                        prod.palletCount = prod.palletIds.size;
+                        delete prod.palletIds;
+                        return prod;
+                    })
+                    .filter(product => InventorySystem.Utils.isValidNumber(product.totalNegative) && parseFloat(product.totalNegative) < 0);
 
-                // Filtrar de nuevo para asegurar que el *consolidado* totalNegative es realmente negativo
-                // (aunque el filtro inicial ya debería haberlo hecho, esto es una doble verificación)
-                // Y ordenar.
-                const filteredAndSortedNegative = finalConsolidatedList
-                    .filter(product => InventorySystem.Utils.isValidNumber(product.totalNegative) && parseFloat(product.totalNegative) < 0)
-                    .sort((a, b) => Math.abs(b.totalNegative) - Math.abs(a.totalNegative));
-                
-                // ***** ESTA ES LA FUENTE DE DATOS PARA LA UI Y PARA EXPORTACIÓN/IMPRESIÓN CONSOLIDADA *****
-                window.currentNegativeProducts = filteredAndSortedNegative; 
-                InventorySystem.Inventory.setFilteredData('negative', filteredAndSortedNegative);
-                
-                currentPage.negative = 1;
-                renderConsolidatedNegativeTable(filteredAndSortedNegative);
-                renderPagination(negativePagination, filteredAndSortedNegative.length, currentPage.negative, 'negative');
+                // Fuente de datos para la tabla y para la exportación consolidada
+                window.currentNegativeProducts = showResults('negative', consolidatedList);
 
             } catch (error) {
                 console.error('Error en filterNegativeInventory:', error);
-                // Opcional: Mostrar un error al usuario
-                // InventorySystem.Utils.showError('Error al filtrar inventario negativo.');
             }
         }
-        
-        /**
-         * Renderizar tabla consolidada de inventario negativo
-         * @param {Array} filteredData - Datos filtrados
-         */
-        function renderConsolidatedNegativeTable(filteredData) {
-            negativeInventoryTable.innerHTML = '';
-            
-            const startIndex = (currentPage.negative - 1) * ITEMS_PER_PAGE;
-            const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredData.length);
-            
-            if (filteredData.length === 0) {
-                const row = document.createElement('tr');
-                const cell = document.createElement('td');
-                cell.colSpan = 7;
-                cell.textContent = 'No se encontraron productos con inventario negativo';
-                cell.style.textAlign = 'center';
-                row.appendChild(cell);
-                negativeInventoryTable.appendChild(row);
-                return;
-            }
-            
-            // Actualizar encabezado de la tabla para la vista consolidada
-            const headerRow = negativeInventoryTable.parentElement.querySelector('thead tr');
-            if (headerRow) {
-                headerRow.innerHTML = `
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Almacenes</th>
-                    <th>Pallets</th>
-                    <th>Balance Total</th>
-                    <th>Disponible</th>
-                    <th>Acciones</th>
-                `;
-            }
-            
-            // Renderizar filas consolidadas
-            for (let i = startIndex; i < endIndex; i++) {
-                const product = filteredData[i];
-                const row = document.createElement('tr');
-                row.classList.add('negative-row');
-                row.setAttribute('data-product-code', product.code);
-                
-                // Código
-                const codeCell = document.createElement('td');
-                codeCell.textContent = product.code;
-                codeCell.setAttribute('data-label', 'Código');
-                row.appendChild(codeCell);
-                
-                // Nombre
-                const nameCell = document.createElement('td');
-                nameCell.textContent = product.name || '';
-                nameCell.setAttribute('data-label', 'Nombre');
-                row.appendChild(nameCell);
-                
-                // Almacenes
-                const warehousesCell = document.createElement('td');
-                warehousesCell.textContent = Array.from(product.warehouses).join(', ');
-                warehousesCell.setAttribute('data-label', 'Almacenes');
-                row.appendChild(warehousesCell);
-                
-                // Pallets
-                const palletsCell = document.createElement('td');
-                palletsCell.textContent = product.palletCount;
-                palletsCell.setAttribute('data-label', 'Pallets');
-                row.appendChild(palletsCell);
-                
-                // Balance Total
-                const balanceCell = document.createElement('td');
-                balanceCell.textContent = InventorySystem.Utils.formatNumber(product.totalNegative);
-                balanceCell.style.color = 'red';
-                balanceCell.style.fontWeight = 'bold';
-                balanceCell.setAttribute('data-label', 'Balance Total');
-                row.appendChild(balanceCell);
-                
-                // Disponible
-                const availableCell = document.createElement('td');
-                availableCell.textContent = InventorySystem.Utils.formatNumber(product.totalAvailable);
-                availableCell.setAttribute('data-label', 'Disponible');
-                row.appendChild(availableCell);
-                
-                // Acciones
-                const actionsCell = document.createElement('td');
-                const detailBtn = document.createElement('button');
-                detailBtn.className = 'btn';
-                detailBtn.innerHTML = '<i class="fas fa-search"></i> Ver Detalle';
-                detailBtn.addEventListener('click', () => {
-                    showProductDetailedView(product.code);
-                });
-                actionsCell.appendChild(detailBtn);
-                actionsCell.setAttribute('data-label', 'Acciones');
-                row.appendChild(actionsCell);
-                
-                negativeInventoryTable.appendChild(row);
-            }
+
+        /* ---------- Detalle de producto ---------- */
+
+        let lastFocused = null;
+
+        function closeModals() {
+            const open = document.querySelectorAll('.modal');
+            if (open.length === 0) return;
+            open.forEach(modal => {
+                if (modal.parentNode) modal.parentNode.removeChild(modal);
+            });
+            document.body.classList.remove('modal-open');
+            if (lastFocused && document.contains(lastFocused)) lastFocused.focus();
+            lastFocused = null;
         }
-        
+
         /**
          * Mostrar vista detallada de un producto
          * @param {string} productCode - Código del producto
          */
         function showProductDetailedView(productCode) {
             try {
-                // Buscar el producto en la lista actual
                 const filteredData = InventorySystem.Inventory.getFilteredData().negative;
                 const product = filteredData.find(p => p.code === productCode);
-                
+
                 if (!product) {
                     console.error('Producto no encontrado:', productCode);
                     return;
                 }
-                
-                // Usar la plantilla para crear el modal
+
+                lastFocused = document.activeElement;
+
                 const template = document.getElementById('product-detail-modal-template');
                 const modal = document.importNode(template.content, true).querySelector('.modal');
-                
-                // Configurar el título
-                modal.querySelector('.product-title').textContent = `Detalle del Producto: ${product.name} (${product.code})`;
-                
-                // Configurar el resumen
+
+                modal.querySelector('.product-title').textContent = product.name || 'Producto sin nombre';
+                modal.querySelector('.product-code').textContent = 'Código ' + product.code;
+
+                // Resumen
                 const summary = modal.querySelector('.product-summary');
-                
-                // Datos del resumen
                 const summaryItems = [
-                    { label: 'Balance Total', value: InventorySystem.Utils.formatNumber(product.totalNegative), isNegative: true },
-                    { label: 'Disponible Total', value: InventorySystem.Utils.formatNumber(product.totalAvailable) },
+                    { label: 'Balance total', value: fmt(product.totalNegative), isNegative: true },
+                    { label: 'Disponible total', value: fmt(product.totalAvailable) },
                     { label: 'Almacenes', value: product.warehouses.size },
                     { label: 'Pallets', value: product.palletCount }
                 ];
-                
+
                 summaryItems.forEach(item => {
                     const summaryItem = document.createElement('div');
                     summaryItem.className = 'summary-item';
-                    
+
                     const label = document.createElement('div');
+                    label.className = 'summary-label';
                     label.textContent = item.label;
-                    label.style.fontSize = '0.9rem';
-                    label.style.color = '#666';
-                    summaryItem.appendChild(label);
-                    
+
                     const value = document.createElement('div');
+                    value.className = 'summary-value' + (item.isNegative ? ' is-negative' : '');
                     value.textContent = item.value;
-                    value.style.fontSize = '1.5rem';
-                    value.style.fontWeight = 'bold';
-                    if (item.isNegative) {
-                        value.style.color = 'red';
-                    }
+
+                    summaryItem.appendChild(label);
                     summaryItem.appendChild(value);
-                    
                     summary.appendChild(summaryItem);
                 });
-                
-                // Configurar la tabla de detalles
+
+                // Tabla de registros: por almacén y luego por pallet
                 const tableBody = modal.querySelector('.detail-table tbody');
-                
-                // Ordenar registros por almacén y luego por ID de pallet
-                const sortedRecords = [...product.records].sort((a, b) => {
-                    // Comparar almacenes primero
-                    const warehouseA = a.warehouse || '';
-                    const warehouseB = b.warehouse || '';
-                    const warehouseCompare = warehouseA.localeCompare(warehouseB);
-                    
-                    if (warehouseCompare !== 0) {
-                        return warehouseCompare;
-                    }
-                    
-                    // Si los almacenes son iguales, comparar pallets
-                    const palletA = a.palletId ? a.palletId.toString() : '';
-                    const palletB = b.palletId ? b.palletId.toString() : '';
-                    return palletA.localeCompare(palletB);
-                });
-                
-                // Agrupar por almacén y ID de pallet para el balance total
+                const sortedRecords = [...product.records].sort((a, b) =>
+                    compareValues(a.warehouse || '', b.warehouse || '') ||
+                    compareValues(a.palletId ? String(a.palletId) : '', b.palletId ? String(b.palletId) : '')
+                );
+
+                // Balance por almacén + pallet
                 const groupedRecords = {};
+                const groupKey = record => (record.warehouse || 'N/A') + '-' + (record.palletId ? record.palletId.toString() : 'N/A');
                 product.records.forEach(record => {
-                    const warehouse = record.warehouse || 'N/A';
-                    const palletId = record.palletId ? record.palletId.toString() : 'N/A';
-                    const key = `${warehouse}-${palletId}`;
-                    
-                    if (!groupedRecords[key]) {
-                        groupedRecords[key] = {
-                            warehouse: warehouse,
-                            palletId: palletId,
-                            totalInventory: 0
-                        };
-                    }
-                    groupedRecords[key].totalInventory += record.physicalInventory;
+                    const key = groupKey(record);
+                    groupedRecords[key] = (groupedRecords[key] || 0) + record.physicalInventory;
                 });
-                
+
                 sortedRecords.forEach(record => {
                     const row = document.createElement('tr');
-                    
-                    // Almacén
-                    const warehouseCell = document.createElement('td');
-                    warehouseCell.textContent = record.warehouse || 'N/A';
-                    row.appendChild(warehouseCell);
-                    
-                    // ID de Pallet
-                    const palletIdCell = document.createElement('td');
-                    palletIdCell.textContent = record.palletId || 'N/A';
-                    row.appendChild(palletIdCell);
-                    
-                    // Inventario Físico
-                    const physicalInventoryCell = document.createElement('td');
-                    physicalInventoryCell.textContent = InventorySystem.Utils.formatNumber(record.physicalInventory);
-                    if (record.physicalInventory < 0) {
-                        physicalInventoryCell.style.color = 'red';
-                        physicalInventoryCell.style.fontWeight = 'bold';
-                    }
-                    row.appendChild(physicalInventoryCell);
-                    
-                    // Disponible
-                    const availableCell = document.createElement('td');
-                    availableCell.textContent = InventorySystem.Utils.formatNumber(record.available);
-                    row.appendChild(availableCell);
-                    
-                    // Balance Total por Almacén
-                    const warehouse = record.warehouse || 'N/A';
-                    const palletId = record.palletId ? record.palletId.toString() : 'N/A';
-                    const key = `${warehouse}-${palletId}`;
-                    
-                    const balanceCell = document.createElement('td');
-                    if (groupedRecords[key]) {
-                        balanceCell.textContent = InventorySystem.Utils.formatNumber(groupedRecords[key].totalInventory);
-                        if (groupedRecords[key].totalInventory < 0) {
-                            balanceCell.style.color = 'red';
-                            balanceCell.style.fontWeight = 'bold';
-                        }
-                    } else {
-                        balanceCell.textContent = 'N/A';
-                    }
-                    row.appendChild(balanceCell);
-                    
+                    const addCell = (label, text, options) => {
+                        const cell = document.createElement('td');
+                        cell.setAttribute('data-label', label);
+                        cell.textContent = text;
+                        if (options && options.numeric) cell.classList.add('num');
+                        if (options && options.negative) cell.classList.add('is-negative');
+                        if (options && options.muted) cell.classList.add('is-muted');
+                        row.appendChild(cell);
+                    };
+                    const balance = groupedRecords[groupKey(record)];
+
+                    addCell('Almacén', record.warehouse || 'Sin almacén', { muted: !record.warehouse });
+                    addCell('ID de pallet', record.palletId || 'Sin pallet', { muted: !record.palletId });
+                    addCell('Inventario físico', fmt(record.physicalInventory), { numeric: true, negative: record.physicalInventory < 0 });
+                    addCell('Disponible', fmt(record.available), { numeric: true, negative: record.available < 0 });
+                    addCell('Balance del pallet', fmt(balance), { numeric: true, negative: balance < 0 });
+
                     tableBody.appendChild(row);
                 });
-                
-                // Configurar eventos de cierre
-                modal.querySelector('.close-btn').addEventListener('click', () => {
-                    document.body.removeChild(modal);
+
+                // Cierre
+                modal.querySelector('.close-btn').addEventListener('click', closeModals);
+                modal.querySelector('.close-button').addEventListener('click', closeModals);
+                modal.addEventListener('click', e => {
+                    if (e.target === modal) closeModals();
                 });
-                
-                modal.querySelector('.close-button').addEventListener('click', () => {
-                    document.body.removeChild(modal);
-                });
-                
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        document.body.removeChild(modal);
-                    }
-                });
-                
-                // Agregar modal al body
+
                 document.body.appendChild(modal);
+                document.body.classList.add('modal-open');
+                modal.querySelector('.close-btn').focus();
             } catch (error) {
                 console.error('Error al mostrar detalle del producto:', error);
-                InventorySystem.Utils.showError('Ha ocurrido un error al mostrar el detalle del producto');
+                InventorySystem.Utils.showError('No se pudo abrir el detalle del producto');
             }
         }
-        
+
         /**
          * Filtrar análisis por pallet
          */
         function filterPalletAnalysis() {
-            // Limpiar vista primero
             resetInventoryView();
-            
-            const searchTerm = palletSearch.value.toLowerCase();
+
+            const searchTerm = palletSearch.value.trim().toLowerCase();
             const palletDetails = InventorySystem.Inventory.getPalletDetails();
-            
-            // Convertir objeto palletDetails a array y filtrar
-            const filteredPallets = Object.values(palletDetails).filter(pallet => 
-                searchTerm === '' || 
+
+            const filteredPallets = Object.values(palletDetails).filter(pallet =>
+                searchTerm === '' ||
                 pallet.palletId.toString().toLowerCase().includes(searchTerm)
             );
-            
-            // Ordenar por número de productos negativos (descendente)
-            filteredPallets.sort((a, b) => b.negativeProducts - a.negativeProducts);
-            
-            // Actualizar datos filtrados
-            InventorySystem.Inventory.setFilteredData('pallet', filteredPallets);
-            
-            // Restablecer a la primera página
-            currentPage.pallet = 1;
-            
-            // Renderizar tabla y paginación
-            renderPalletTable(filteredPallets);
-            renderPagination(palletPagination, filteredPallets.length, currentPage.pallet, 'pallet');
+
+            showResults('pallet', filteredPallets);
         }
-        
+
         /**
-         * Renderizar tabla de análisis por pallet
-         * @param {Array} filteredData - Datos filtrados
-         */
-        function renderPalletTable(filteredData) {
-            palletAnalysisTable.innerHTML = '';
-            
-            const startIndex = (currentPage.pallet - 1) * ITEMS_PER_PAGE;
-            const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredData.length);
-            
-            if (filteredData.length === 0) {
-                const row = document.createElement('tr');
-                const cell = document.createElement('td');
-                cell.colSpan = 5;
-                cell.textContent = 'No se encontraron pallets';
-                cell.style.textAlign = 'center';
-                row.appendChild(cell);
-                palletAnalysisTable.appendChild(row);
-                return;
-            }
-            
-            for (let i = startIndex; i < endIndex; i++) {
-                const pallet = filteredData[i];
-                const row = document.createElement('tr');
-                
-                // ID de Pallet
-                const palletIdCell = document.createElement('td');
-                palletIdCell.textContent = pallet.palletId;
-                palletIdCell.setAttribute('data-label', 'ID de Pallet');
-                row.appendChild(palletIdCell);
-                
-                // Número de Productos
-                const productsCell = document.createElement('td');
-                productsCell.textContent = pallet.products.length;
-                productsCell.setAttribute('data-label', 'Número de Productos');
-                row.appendChild(productsCell);
-                
-                // Productos Negativos
-                const negativeProductsCell = document.createElement('td');
-                if (pallet.negativeProducts > 0) {
-                    const badge = document.createElement('span');
-                    badge.classList.add('badge', 'badge-danger');
-                    badge.textContent = pallet.negativeProducts;
-                    negativeProductsCell.appendChild(badge);
-                } else {
-                    negativeProductsCell.textContent = '0';
-                }
-                negativeProductsCell.setAttribute('data-label', 'Productos Negativos');
-                row.appendChild(negativeProductsCell);
-                
-                // Inventario Total
-                const totalInventoryCell = document.createElement('td');
-                totalInventoryCell.textContent = InventorySystem.Utils.formatNumber(pallet.totalInventory);
-                if (pallet.totalInventory < 0) {
-                    totalInventoryCell.style.color = 'red';
-                    totalInventoryCell.style.fontWeight = 'bold';
-                }
-                totalInventoryCell.setAttribute('data-label', 'Inventario Total');
-                row.appendChild(totalInventoryCell);
-                
-                // Acciones
-                const actionsCell = document.createElement('td');
-                const detailsBtn = document.createElement('button');
-                detailsBtn.classList.add('btn');
-                detailsBtn.textContent = 'Ver Detalle';
-                detailsBtn.addEventListener('click', () => {
-                    showPalletDetails(pallet.palletId);
-                });
-                actionsCell.appendChild(detailsBtn);
-                actionsCell.setAttribute('data-label', 'Acciones');
-                row.appendChild(actionsCell);
-                
-                palletAnalysisTable.appendChild(row);
-            }
-        }
-        
-        /**
-         * Mostrar detalles de un pallet específico
+         * Mostrar los productos de un pallet en la pestaña de inventario completo
          * @param {string} palletId - ID del pallet
          */
         function showPalletDetails(palletId) {
-            // Filtrar para mostrar solo los productos de este pallet
-            allSearch.value = '';
-            allWarehouseFilter.value = '';
             allStatusFilter.value = '';
+            if (allWarehouseMultiSelect && typeof allWarehouseMultiSelect.clearSelection === 'function') {
+                allWarehouseMultiSelect.clearSelection();
+            }
             allSearch.value = palletId;
-            
-            // Cambiar a la pestaña de inventario completo
+
+            // switchTab ya aplica el filtro
             switchTab('all-inventory');
-            
-            // Filtrar
-            filterAllInventory();
+            allSearch.focus();
         }
-        
+
         /**
          * Filtrar inventario completo
          */
         function filterAllInventory() {
-            // Limpiar vista primero
             resetInventoryView();
-            
-            const searchTerm = allSearch.value.toLowerCase();
+
+            const searchTerm = allSearch.value.trim().toLowerCase();
             const statusFilter = allStatusFilter.value;
             const inventoryData = InventorySystem.Inventory.getInventoryData();
-            
-            // MULTI-SELECT: Obtener almacenes seleccionados
-            const selectedWarehouses = allWarehouseMultiSelect ? 
-                allWarehouseMultiSelect.getSelectedValues() : [];
-            
-            // Filtrar productos
+            const selectedWarehouses = getSelectedAllWarehouses();
+
             const filteredInventory = inventoryData.filter(item => {
-                // Filtro de búsqueda
-                const matchesSearch = 
-                    searchTerm === '' || 
-                    item.code.toString().toLowerCase().includes(searchTerm) || 
-                    (item.name && item.name.toLowerCase().includes(searchTerm)) || 
+                const matchesSearch =
+                    searchTerm === '' ||
+                    String(item.code).toLowerCase().includes(searchTerm) ||
+                    String(item.name || '').toLowerCase().includes(searchTerm) ||
                     (item.palletId && item.palletId.toString().toLowerCase().includes(searchTerm));
-                
-                // Filtro de almacén (multi-select)
-                const matchesWarehouse = selectedWarehouses.length === 0 || 
+
+                const matchesWarehouse = selectedWarehouses.length === 0 ||
                     selectedWarehouses.includes(item.warehouse);
-                
-                // Filtro de estado
+
                 let matchesStatus = true;
                 if (statusFilter === 'positive') {
                     matchesStatus = item.physicalInventory > 0;
@@ -645,97 +662,15 @@
                 } else if (statusFilter === 'zero') {
                     matchesStatus = item.physicalInventory === 0;
                 }
-                
+
                 return matchesSearch && matchesWarehouse && matchesStatus;
             });
-            
-            // Actualizar datos filtrados
-            InventorySystem.Inventory.setFilteredData('all', filteredInventory);
-            
-            // Restablecer a la primera página
-            currentPage.all = 1;
-            
-            // Renderizar tabla y paginación
-            renderAllTable(filteredInventory);
-            renderPagination(allPagination, filteredInventory.length, currentPage.all, 'all');
+
+            showResults('all', filteredInventory);
         }
-        
+
         /**
-         * Renderizar tabla de inventario completo
-         * @param {Array} filteredData - Datos filtrados
-         */
-        function renderAllTable(filteredData) {
-            allInventoryTable.innerHTML = '';
-            
-            const startIndex = (currentPage.all - 1) * ITEMS_PER_PAGE;
-            const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredData.length);
-            
-            if (filteredData.length === 0) {
-                const row = document.createElement('tr');
-                const cell = document.createElement('td');
-                cell.colSpan = 6;
-                cell.textContent = 'No se encontraron productos';
-                cell.style.textAlign = 'center';
-                row.appendChild(cell);
-                allInventoryTable.appendChild(row);
-                return;
-            }
-            
-            for (let i = startIndex; i < endIndex; i++) {
-                const item = filteredData[i];
-                const row = document.createElement('tr');
-                
-                // Agregar clase si el inventario es negativo
-                if (item.physicalInventory < 0) {
-                    row.classList.add('negative-row');
-                }
-                
-                // Código
-                const codeCell = document.createElement('td');
-                codeCell.textContent = item.code;
-                codeCell.setAttribute('data-label', 'Código');
-                row.appendChild(codeCell);
-                
-                // Nombre
-                const nameCell = document.createElement('td');
-                nameCell.textContent = item.name || '';
-                nameCell.setAttribute('data-label', 'Nombre');
-                row.appendChild(nameCell);
-                
-                // Almacén
-                const warehouseCell = document.createElement('td');
-                warehouseCell.textContent = item.warehouse || '';
-                warehouseCell.setAttribute('data-label', 'Almacén');
-                row.appendChild(warehouseCell);
-                
-                // ID de Pallet
-                const palletIdCell = document.createElement('td');
-                palletIdCell.textContent = item.palletId || 'N/A';
-                palletIdCell.setAttribute('data-label', 'ID de Pallet');
-                row.appendChild(palletIdCell);
-                
-                // Inventario Físico
-                const physicalInventoryCell = document.createElement('td');
-                physicalInventoryCell.textContent = InventorySystem.Utils.formatNumber(item.physicalInventory);
-                if (item.physicalInventory < 0) {
-                    physicalInventoryCell.style.color = 'red';
-                    physicalInventoryCell.style.fontWeight = 'bold';
-                }
-                physicalInventoryCell.setAttribute('data-label', 'Inventario Físico');
-                row.appendChild(physicalInventoryCell);
-                
-                // Disponible
-                const availableCell = document.createElement('td');
-                availableCell.textContent = InventorySystem.Utils.formatNumber(item.available);
-                availableCell.setAttribute('data-label', 'Disponible');
-                row.appendChild(availableCell);
-                
-                allInventoryTable.appendChild(row);
-            }
-        }
-        
-        /**
-         * Renderizar paginación
+         * Renderizar paginación y el contador de resultados
          * @param {HTMLElement} paginationElement - Elemento de paginación
          * @param {number} totalItems - Total de elementos
          * @param {number} currentPageNum - Página actual
@@ -743,81 +678,77 @@
          */
         function renderPagination(paginationElement, totalItems, currentPageNum, pageType) {
             paginationElement.innerHTML = '';
-            
-            if (totalItems === 0) {
-                return;
-            }
-            
-            const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-            
-            // Botón de página anterior
-            if (totalPages > 1) {
-                const prevBtn = document.createElement('button');
-                prevBtn.innerHTML = '«';
-                prevBtn.disabled = currentPageNum === 1;
-                prevBtn.addEventListener('click', () => {
-                    if (currentPageNum > 1) {
-                        currentPage[pageType] = currentPageNum - 1;
-                        refreshPageContent(pageType);
-                    }
-                });
-                paginationElement.appendChild(prevBtn);
-                
-                // Botones de número de página
-                const maxVisiblePages = 5;
-                let startPage = Math.max(1, currentPageNum - Math.floor(maxVisiblePages / 2));
-                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-                
-                if (endPage - startPage + 1 < maxVisiblePages) {
-                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+
+            const countEl = counts[pageType];
+            if (countEl) {
+                if (totalItems === 0) {
+                    countEl.textContent = '';
+                } else {
+                    const noun = NOUNS[pageType][totalItems === 1 ? 0 : 1];
+                    const first = (currentPageNum - 1) * pageSize + 1;
+                    const last = Math.min(currentPageNum * pageSize, totalItems);
+                    countEl.textContent = totalItems <= pageSize
+                        ? fmt(totalItems) + ' ' + noun
+                        : fmt(first) + '–' + fmt(last) + ' de ' + fmt(totalItems) + ' ' + noun;
                 }
-                
-                for (let i = startPage; i <= endPage; i++) {
-                    const pageBtn = document.createElement('button');
-                    pageBtn.textContent = i;
-                    if (i === currentPageNum) {
-                        pageBtn.classList.add('active');
-                    }
-                    pageBtn.addEventListener('click', () => {
-                        currentPage[pageType] = i;
-                        refreshPageContent(pageType);
-                    });
-                    paginationElement.appendChild(pageBtn);
-                }
-                
-                // Botón de página siguiente
-                const nextBtn = document.createElement('button');
-                nextBtn.innerHTML = '»';
-                nextBtn.disabled = currentPageNum === totalPages;
-                nextBtn.addEventListener('click', () => {
-                    if (currentPageNum < totalPages) {
-                        currentPage[pageType] = currentPageNum + 1;
-                        refreshPageContent(pageType);
-                    }
-                });
-                paginationElement.appendChild(nextBtn);
             }
+
+            const totalPages = Math.ceil(totalItems / pageSize);
+            if (totalPages <= 1) return;
+
+            const goTo = page => {
+                currentPage[pageType] = page;
+                refreshPageContent(pageType);
+            };
+            const addButton = (content, page, options) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = content;
+                if (options && options.label) button.setAttribute('aria-label', options.label);
+                if (options && options.disabled) button.disabled = true;
+                if (page === currentPageNum && !(options && options.nav)) {
+                    button.classList.add('active');
+                    button.setAttribute('aria-current', 'page');
+                }
+                button.addEventListener('click', () => goTo(page));
+                paginationElement.appendChild(button);
+            };
+            const addGap = () => {
+                const gap = document.createElement('span');
+                gap.className = 'pagination-gap';
+                gap.textContent = '…';
+                paginationElement.appendChild(gap);
+            };
+
+            addButton('‹', currentPageNum - 1, { nav: true, label: 'Página anterior', disabled: currentPageNum === 1 });
+
+            // Primera, última y una ventana alrededor de la página actual
+            const windowSize = 1;
+            let startPage = Math.max(2, currentPageNum - windowSize);
+            let endPage = Math.min(totalPages - 1, currentPageNum + windowSize);
+            if (currentPageNum <= 3) endPage = Math.min(totalPages - 1, 4);
+            if (currentPageNum >= totalPages - 2) startPage = Math.max(2, totalPages - 3);
+
+            addButton('1', 1);
+            if (startPage > 2) addGap();
+            for (let i = startPage; i <= endPage; i++) addButton(String(i), i);
+            if (endPage < totalPages - 1) addGap();
+            addButton(String(totalPages), totalPages);
+
+            addButton('›', currentPageNum + 1, { nav: true, label: 'Página siguiente', disabled: currentPageNum === totalPages });
         }
-        
+
         /**
          * Actualizar contenido de página según el tipo
          * @param {string} pageType - Tipo de página (negative, pallet, all)
          */
         function refreshPageContent(pageType) {
-            const filteredData = InventorySystem.Inventory.getFilteredData();
-            
-            if (pageType === 'negative') {
-                renderConsolidatedNegativeTable(filteredData.negative);
-                renderPagination(negativePagination, filteredData.negative.length, currentPage.negative, 'negative');
-            } else if (pageType === 'pallet') {
-                renderPalletTable(filteredData.pallet);
-                renderPagination(palletPagination, filteredData.pallet.length, currentPage.pallet, 'pallet');
-            } else if (pageType === 'all') {
-                renderAllTable(filteredData.all);
-                renderPagination(allPagination, filteredData.all.length, currentPage.all, 'all');
-            }
+            if (!COLUMNS[pageType]) return;
+            const data = InventorySystem.Inventory.getFilteredData()[pageType] || [];
+            renderTable(pageType, data);
+            renderPagination(paginations[pageType], data.length, currentPage[pageType], pageType);
         }
-        
+
         /**
          * Actualizar filtros de almacén
          */
@@ -874,8 +805,7 @@
                     noResultsText: 'No se encontraron almacenes',
                     maxDisplay: 2,
                     onApply: function(selected) {
-                        console.log('🔍 Filtro aplicado - Almacenes seleccionados:', selected.length);
-                        filterNegativeInventory();
+                                                filterNegativeInventory();
                     }
                 });
                 
@@ -888,8 +818,7 @@
                     noResultsText: 'No se encontraron almacenes',
                     maxDisplay: 2,
                     onApply: function(selected) {
-                        console.log('🔍 Filtro aplicado - Almacenes seleccionados:', selected.length);
-                        filterAllInventory();
+                                                filterAllInventory();
                     }
                 });
                 
@@ -903,15 +832,12 @@
          * Limpiar datos y contenedores antes de mostrar nueva información
          */
         function resetInventoryView() {
-            // Limpiar tablas
-            if (negativeInventoryTable) negativeInventoryTable.innerHTML = '';
-            if (palletAnalysisTable) palletAnalysisTable.innerHTML = '';
-            if (allInventoryTable) allInventoryTable.innerHTML = '';
-            
-            // Limpiar paginación
-            if (negativePagination) negativePagination.innerHTML = '';
-            if (palletPagination) palletPagination.innerHTML = '';
-            if (allPagination) allPagination.innerHTML = '';
+            // Limpiar tablas, paginación y contadores
+            Object.keys(bodies).forEach(type => {
+                bodies[type].innerHTML = '';
+                paginations[type].innerHTML = '';
+                if (counts[type]) counts[type].textContent = '';
+            });
             
             // Limpiar gráficos si estamos en la pestaña de dashboard
             const dashboardContent = document.getElementById('dashboard-content');
@@ -937,10 +863,7 @@
             }
             
             // Eliminar cualquier modal que pudiera estar abierto
-            const existingModals = document.querySelectorAll('.modal');
-            existingModals.forEach(modal => {
-                document.body.removeChild(modal);
-            });
+            closeModals();
         }
         
         /**

@@ -1,0 +1,249 @@
+/* =====================================================
+   Ajustes finales
+   Se carga al final para que los componentes anteriores
+   (exportación, multi-select, dashboard, botón de análisis
+   histórico) usen la misma paleta que main.css.
+   ===================================================== */
+
+/* ---------- Botones de exportación ---------- */
+.table-toolbar .export-buttons {
+    margin: 0 0 0 auto;
+    flex-wrap: wrap;
+}
+
+.export-buttons .btn,
+#export-all-button {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+}
+
+.export-buttons .btn:hover,
+#export-all-button:hover {
+    background: var(--surface-alt);
+    border-color: var(--steel-light);
+}
+
+.export-buttons .btn i.fa-file-pdf { color: var(--red); }
+.export-buttons .btn i.fa-file-excel { color: var(--green); }
+
+#dashboard-content > .export-buttons {
+    justify-content: flex-end;
+}
+
+/* ---------- Botón de análisis histórico ---------- */
+.btn-streamlit {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--radius);
+    box-shadow: none;
+    padding: 0.5rem 1rem;
+    min-height: 40px;
+    font-family: var(--font-body);
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-streamlit::before {
+    display: none;
+}
+
+.btn-streamlit:hover,
+.btn-streamlit:active {
+    transform: none;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #fff;
+}
+
+.btn-streamlit span {
+    font-family: inherit;
+}
+
+.btn-streamlit:focus,
+.btn-cancel:focus,
+.btn-confirm:focus {
+    outline: 3px solid var(--amber);
+    outline-offset: 2px;
+}
+
+.streamlit-modal-content {
+    border-radius: var(--radius-lg);
+}
+
+.modal-icon {
+    background: var(--ink);
+    color: var(--amber);
+    box-shadow: none;
+}
+
+.feature-item i {
+    color: var(--ink);
+}
+
+.btn-confirm {
+    background: var(--amber);
+    color: var(--ink);
+    box-shadow: none;
+}
+
+.btn-confirm:hover {
+    background: #ffb81f;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ---------- Filtro de almacenes ---------- */
+.multi-select-wrapper {
+    width: auto;
+    min-width: 220px;
+}
+
+.multi-select-trigger {
+    border-color: var(--line);
+    border-radius: var(--radius);
+    color: var(--ink);
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.multi-select-trigger:hover {
+    border-color: var(--steel-light);
+    box-shadow: none;
+}
+
+.multi-select-trigger:focus {
+    outline: 3px solid var(--amber);
+}
+
+.multi-select-trigger.open,
+.multi-select-dropdown {
+    border-color: var(--ink);
+}
+
+.multi-select-label.placeholder {
+    color: var(--ink);
+}
+
+.multi-select-count,
+.multi-select-option.selected .multi-select-checkbox {
+    background: var(--ink);
+    border-color: var(--ink);
+    box-shadow: none;
+}
+
+.multi-select-option.selected {
+    background-color: var(--amber-soft);
+}
+
+.multi-select-option-text {
+    color: var(--ink);
+}
+
+.multi-select-search:focus {
+    border-color: var(--ink);
+}
+
+.multi-select-btn-all {
+    background: var(--ink);
+}
+
+.multi-select-btn-all:hover {
+    background: var(--ink-soft);
+}
+
+.multi-select-apply {
+    background: var(--amber);
+    color: var(--ink);
+    border-radius: var(--radius);
+}
+
+.multi-select-apply:hover {
+    background: #ffb81f;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ---------- Dashboard ---------- */
+.chart-container {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+}
+
+.chart-container::before {
+    display: none;
+}
+
+.chart-container:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.drill-down-section,
+.in-order-section {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+}
+
+.section-header h3,
+.detail-table-container h3 {
+    font-size: 1.25rem;
+}
+
+.filter-controls {
+    background-color: var(--surface-alt);
+    border: 1px solid var(--line-soft);
+    align-items: center;
+}
+
+.filter-group select {
+    min-height: 40px;
+    background: var(--surface);
+    border-color: var(--line);
+}
+
+.filter-group .btn {
+    border-color: var(--ink);
+    padding: 0.45rem 1rem;
+}
+
+.data-source-info {
+    display: none;
+}
+
+/* ---------- Ventana de opciones de exportación ---------- */
+.export-options-content {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-raised);
+    max-height: 92vh;
+    overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+    .table-toolbar .export-buttons {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .table-toolbar .export-buttons .btn {
+        flex: 1 1 auto;
+    }
+
+    .multi-select-wrapper {
+        max-width: none;
+        width: 100%;
+    }
+
+    .file-bar-actions .btn,
+    #export-all-slot,
+    #export-all-button {
+        flex: 1 1 auto;
+    }
+
+    #export-all-button {
+        width: 100%;
+    }
+}

@@ -2513,7 +2513,7 @@
 
         function addExportAllButton() {
             const container = document.querySelector('.container');
-            if (!container || container.querySelector('#export-all-button')) return;
+            if (!container || document.getElementById('export-all-button')) return;
 
             const exportAllButton = document.createElement('button');
             exportAllButton.id = 'export-all-button';
@@ -2525,7 +2525,13 @@
             const inventoryAnalysisCard = document.getElementById('inventory-analysis');
             const adminControlsCard = document.getElementById('admin-controls');
 
-            if (adminControlsCard && adminControlsCard.offsetParent !== null) {
+            const exportAllSlot = document.getElementById('export-all-slot');
+
+            if (exportAllSlot) {
+                exportAllButton.style.marginTop = '';
+                exportAllButton.style.marginBottom = '';
+                exportAllSlot.appendChild(exportAllButton);
+            } else if (adminControlsCard && adminControlsCard.offsetParent !== null) {
                 adminControlsCard.parentNode.insertBefore(exportAllButton, adminControlsCard.nextSibling);
             } else if (inventoryAnalysisCard && inventoryAnalysisCard.offsetParent !== null) {
                 container.insertBefore(exportAllButton, inventoryAnalysisCard);
