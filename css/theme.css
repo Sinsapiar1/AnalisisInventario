@@ -220,6 +220,18 @@
     margin: 0;
 }
 
+/* El gráfico ya va dentro de un recuadro: sin segundo marco ni sombra */
+.chart-container canvas {
+    box-shadow: none;
+    border-radius: 0;
+    background: none;
+}
+
+.chart-container canvas:hover {
+    box-shadow: none;
+    transform: none;
+}
+
 /* ---------- Ventana de opciones de exportación ---------- */
 .export-options-content {
     border-radius: var(--radius-lg);

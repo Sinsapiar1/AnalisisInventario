@@ -14,8 +14,8 @@
         // Configuraciones visuales mejoradas
         const enhancedConfig = {
             colors: {
-                primary: '#667eea',
-                secondary: '#764ba2', 
+                primary: '#2b3946',
+                secondary: '#17212b', 
                 success: '#10b981',
                 danger: '#ef4444',
                 warning: '#f59e0b',
@@ -24,7 +24,7 @@
                 dark: '#1e293b'
             },
             gradients: {
-                blue: ['#667eea', '#764ba2'],
+                blue: ['#5a6875', '#2b3946'],
                 green: ['#10b981', '#059669'],
                 red: ['#ef4444', '#dc2626'],
                 orange: ['#f59e0b', '#d97706'],
@@ -90,14 +90,14 @@
                         display: true,
                         text: title,
                         font: {
-                            size: 18,
+                            size: 15,
                             weight: 'bold',
                             family: "'Segoe UI', system-ui, sans-serif"
                         },
                         color: enhancedConfig.colors.dark,
                         padding: {
-                            top: 20,
-                            bottom: 30
+                            top: 6,
+                            bottom: 14
                         }
                     },
                     legend: {
@@ -373,7 +373,7 @@
                             }
                         },
                         plugins: {
-                            ...getEnhancedBaseOptions().plugins,
+                            ...getEnhancedBaseOptions('🏭 Distribución por Almacén').plugins,
                             tooltip: {
                                 ...getEnhancedBaseOptions().plugins.tooltip,
                                 callbacks: {
@@ -522,7 +522,7 @@
                             }
                         },
                         plugins: {
-                            ...getEnhancedBaseOptions().plugins,
+                            ...getEnhancedBaseOptions('⚠️ Top 10 Productos con Mayor Inventario Negativo').plugins,
                             legend: {
                                 display: false
                             },

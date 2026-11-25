@@ -553,18 +553,28 @@
      * Chart.js dibuja sus títulos en un canvas, así que se traduce la
      * configuración justo antes de crear cada gráfico. Si algo falla,
      * el gráfico se crea igual, en español. */
+    // Quita el emoji inicial de títulos y leyendas ("📊 Título" -> "Título")
+    function stripLeadingEmoji(text) {
+        return /^[^\p{L}\p{N}]*\p{Extended_Pictographic}/u.test(text)
+            ? text.replace(/^[^\p{L}\p{N}(]+/u, '')
+            : text;
+    }
+
+    function chartText(text) {
+        if (typeof text !== 'string') return text;
+        const clean = stripLeadingEmoji(text);
+        const translated = translatePhrase(clean);
+        return translated !== null ? translated : clean;
+    }
+
     function translateChartConfig(config) {
-        if (lang !== 'en' || !config) return;
+        if (!config) return;
         const fix = (obj, prop) => {
             if (!obj) return;
             if (typeof obj[prop] === 'string') {
-                const translated = translatePhrase(obj[prop]);
-                if (translated !== null) obj[prop] = translated;
+                obj[prop] = chartText(obj[prop]);
             } else if (Array.isArray(obj[prop])) {
-                obj[prop] = obj[prop].map(item => {
-                    const translated = typeof item === 'string' ? translatePhrase(item) : null;
-                    return translated !== null ? translated : item;
-                });
+                obj[prop] = obj[prop].map(chartText);
             }
         };
         if (config.data) {
