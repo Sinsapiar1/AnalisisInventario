@@ -570,47 +570,9 @@
         function enhanceChartContainers() {
             const chartContainers = document.querySelectorAll('.chart-container');
             
-            chartContainers.forEach((container, index) => {
-                if (container.classList.contains('enhanced')) return;
-                
-                // Aplicar estilos mejorados
-                container.style.cssText += `
-                    background: linear-gradient(135deg, white 0%, #f8fafc 100%);
-                    border-radius: 16px;
-                    padding: 25px;
-                    margin: 20px 0;
-                    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-                    border: 1px solid rgba(255,255,255,0.2);
-                    backdrop-filter: blur(10px);
-                    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                    position: relative;
-                    overflow: hidden;
-                `;
-                
-                // Añadir línea decorativa superior
-                const decorativeLine = document.createElement('div');
-                decorativeLine.style.cssText = `
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 4px;
-                    background: linear-gradient(90deg, ${enhancedConfig.colors.primary}, ${enhancedConfig.colors.secondary});
-                    border-radius: 16px 16px 0 0;
-                `;
-                container.insertBefore(decorativeLine, container.firstChild);
-                
-                // Efectos hover
-                container.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-5px)';
-                    this.style.boxShadow = '0 20px 60px rgba(0,0,0,0.15)';
-                });
-                
-                container.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                    this.style.boxShadow = '0 10px 40px rgba(0,0,0,0.1)';
-                });
-                
+            // El aspecto de los contenedores lo define css/theme.css;
+            // aquí solo se marcan como procesados.
+            chartContainers.forEach(container => {
                 container.classList.add('enhanced');
             });
         }
@@ -621,9 +583,8 @@
         let renderedOnce = false;
         function renderDashboardEnhanced() {
             try {
-                if (renderedOnce) {
-                    return originalFunctions.renderDashboard ? originalFunctions.renderDashboard() : undefined;
-                }
+                // Los gráficos mejorados se aplican en cada render, no solo en el primero,
+                // para que el dashboard se vea igual cada vez que se abre.
                 console.log('🎨 Aplicando mejoras visuales a gráficos...');
                 
                 // Ejecutar función original primero

@@ -105,6 +105,7 @@
         };
         const REQUIRED_FIELDS = ['code', 'physicalInventory'];
         const HEADER_SCAN_ROWS = 25;
+        const t = (key, vars) => InventorySystem.I18n.t(key, vars);
 
         /**
          * Puntuar qué tan bien coincide un encabezado con un alias
@@ -298,6 +299,9 @@
                         enhancedCards.remove();
                     }
                     
+                    // Remover el resumen (se vuelve a calcular con el archivo nuevo)
+                    dashboardContent.querySelectorAll('.dash-summary, .dash-charts-title').forEach(el => el.remove());
+
                     // Remover mensajes de fuente de datos
                     const dataSources = dashboardContent.querySelectorAll('.data-source-info');
                     dataSources.forEach(el => el.remove());
@@ -398,17 +402,11 @@
          */
         function loadFile(file) {
             if (!/\.(xlsx|xlsm|xls|csv)$/i.test(file.name)) {
-                InventorySystem.Utils.showError(
-                    'Ese archivo no es un Excel',
-                    'Use la exportación de Axapta en formato .xlsx, .xls o .csv.'
-                );
+                InventorySystem.Utils.showError(t('msg.notExcel'), t('msg.notExcel.detail'));
                 return;
             }
             if (typeof XLSX === 'undefined') {
-                InventorySystem.Utils.showError(
-                    'No se pudo cargar el lector de Excel',
-                    'Revise la conexión a internet y recargue la página.'
-                );
+                InventorySystem.Utils.showError(t('msg.noReader'), t('msg.noReader.detail'));
                 return;
             }
 
@@ -448,10 +446,7 @@
 
                         const items = buildItems(chosen.rows, chosen.header);
                         if (items.length === 0) {
-                            InventorySystem.Utils.showError(
-                                'El archivo no tiene filas de inventario',
-                                'Se encontraron los encabezados, pero ninguna fila con código de artículo.'
-                            );
+                            InventorySystem.Utils.showError(t('msg.noRows'), t('msg.noRows.detail'));
                             return;
                         }
 
@@ -466,17 +461,14 @@
 
                         const optionalMissing = sourceInfo.missingOptional.length;
                         InventorySystem.Utils.showSuccess(
-                            'Archivo analizado: ' + InventorySystem.Utils.formatNumber(items.length) + ' filas',
+                            t('msg.loaded', { n: InventorySystem.Utils.formatNumber(items.length) }),
                             optionalMissing > 0
-                                ? 'No venían ' + optionalMissing + ' columnas opcionales; se tratan como 0.'
-                                : 'Formato de Axapta en ' + sourceInfo.languageLabel + '.'
+                                ? t('msg.loaded.missing', { n: optionalMissing })
+                                : t('msg.loaded.format.' + sourceInfo.language)
                         );
                     } catch (error) {
                         console.error('Error al procesar el archivo:', error);
-                        InventorySystem.Utils.showError(
-                            'No se pudo leer el archivo',
-                            'Puede estar dañado o protegido. Vuelva a exportarlo desde Axapta e inténtelo de nuevo.'
-                        );
+                        InventorySystem.Utils.showError(t('msg.unreadable'), t('msg.unreadable.detail'));
                     } finally {
                         InventorySystem.Utils.showLoading(false);
                     }
@@ -484,7 +476,7 @@
             };
 
             reader.onerror = function() {
-                InventorySystem.Utils.showError('No se pudo leer el archivo', 'Compruebe que no esté abierto en Excel.');
+                InventorySystem.Utils.showError(t('msg.unreadable'), t('msg.unreadable.open'));
                 InventorySystem.Utils.showLoading(false);
             };
 
@@ -496,20 +488,16 @@
          */
         function reportUnreadableFile(attempt) {
             if (!attempt || attempt.header.matched === 0) {
-                InventorySystem.Utils.showError(
-                    'No se reconocen las columnas del archivo',
-                    'Se espera la exportación de stock de Axapta, en español o en inglés, con columnas como ' +
-                    '"Código" / "Item number" e "Inventario físico" / "Physical stock".'
-                );
+                InventorySystem.Utils.showError(t('msg.unknownColumns'), t('msg.unknownColumns.detail'));
                 return;
             }
             const englishNames = { code: 'Item number', physicalInventory: 'Physical stock' };
             const missing = attempt.header.missingRequired.map(field =>
-                '"' + COLUMN_ALIASES[field].label + '" (en inglés "' + englishNames[field] + '")'
+                t('msg.missing.item', { es: COLUMN_ALIASES[field].label, en: englishNames[field] })
             );
             InventorySystem.Utils.showError(
-                missing.length === 1 ? 'Falta una columna obligatoria' : 'Faltan columnas obligatorias',
-                'No se encontró ' + missing.join(' ni ') + '. Añádala a la exportación de Axapta y cargue el archivo de nuevo.'
+                t(missing.length === 1 ? 'msg.missingOne' : 'msg.missingMany'),
+                t('msg.missing.detail', { list: missing.join(t('msg.missing.join')) })
             );
         }
 
@@ -565,13 +553,11 @@
             const fields = Object.keys(COLUMN_ALIASES);
             const found = fields.filter(f => chosen.header.indices[f] !== -1);
             const missingOptional = fields
-                .filter(f => chosen.header.indices[f] === -1 && f !== 'serialNumber')
-                .map(f => COLUMN_ALIASES[f].label);
+                .filter(f => chosen.header.indices[f] === -1 && f !== 'serialNumber');
             return {
                 fileName: name,
                 sheetName: chosen.sheetName,
                 language: chosen.header.language,
-                languageLabel: chosen.header.language === 'en' ? 'inglés' : 'español',
                 headerRow: chosen.header.rowIndex + 1,
                 rowCount: rowCount,
                 foundCount: found.length,
@@ -603,23 +589,23 @@
          */
         function renderFileSummary() {
             lastUpdateEl.textContent = lastUpdate ?
-                'Última actualización: ' + InventorySystem.Utils.formatDate(lastUpdate) : '';
+                t('file.updated', { date: InventorySystem.Utils.formatDate(lastUpdate) }) : '';
             if (!fileSummary) return;
 
             fileSummary.textContent = '';
             if (!sourceInfo) {
-                fileName.textContent = 'Inventario guardado';
+                fileName.textContent = t('file.saved');
                 return;
             }
 
             fileName.textContent = sourceInfo.fileName;
 
             const facts = [
-                InventorySystem.Utils.formatNumber(sourceInfo.rowCount) + ' filas',
-                'Axapta en ' + sourceInfo.languageLabel,
-                sourceInfo.foundCount + ' columnas reconocidas'
+                t('file.rows', { n: InventorySystem.Utils.formatNumber(sourceInfo.rowCount) }),
+                t('file.lang.' + (sourceInfo.language === 'en' ? 'en' : 'es')),
+                t('file.columns', { n: sourceInfo.foundCount })
             ];
-            if (sourceInfo.headerRow > 1) facts.push('encabezados en la fila ' + sourceInfo.headerRow);
+            if (sourceInfo.headerRow > 1) facts.push(t('file.headerRow', { n: sourceInfo.headerRow }));
 
             facts.forEach(fact => {
                 const chip = document.createElement('span');
@@ -628,13 +614,25 @@
                 fileSummary.appendChild(chip);
             });
 
-            if (sourceInfo.missingOptional.length > 0) {
+            const missing = (sourceInfo.missingOptional || [])
+                // Los archivos guardados con la versión anterior traen aquí el nombre ya escrito
+                .map(field => COLUMN_ALIASES[field] ? t('field.' + field) : field);
+            if (missing.length > 0) {
                 const warn = document.createElement('span');
                 warn.className = 'file-fact file-fact-warn';
-                warn.textContent = 'Sin ' + sourceInfo.missingOptional.join(', ');
-                warn.title = 'Estas columnas no venían en el archivo; sus valores se muestran como 0.';
+                warn.textContent = t('file.missing', { list: missing.join(', ') });
+                warn.title = t('file.missingHelp');
                 fileSummary.appendChild(warn);
             }
+        }
+
+        /**
+         * Volver a escribir los textos al cambiar de idioma
+         */
+        function refreshLanguage() {
+            if (inventoryData.length === 0) return;
+            renderFileSummary();
+            analyzeData(); // las cifras cambian de formato (1.269,5 / 1,269.5)
         }
 
         /**
@@ -648,7 +646,7 @@
             lastUpdateEl.textContent = '';
             if (fileSummary) fileSummary.textContent = '';
             deleteSavedData();
-            InventorySystem.Utils.showToast('info', 'Inventario quitado', 'Cargue otro archivo cuando quiera.');
+            InventorySystem.Utils.showToast('info', t('msg.removed'), t('msg.removed.detail'));
         }
 
         /**
@@ -853,6 +851,7 @@
             uploadFile,
             loadFile,
             clearData,
+            refreshLanguage,
             getSourceInfo: function() { return sourceInfo; },
             analyzeData,
             loadSavedData,

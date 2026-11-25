@@ -23,44 +23,35 @@
         };
 
         const fmt = n => InventorySystem.Utils.formatNumber(n);
+        const t = (key, vars) => InventorySystem.I18n.t(key, vars);
+        const tn = (key, count, vars) => InventorySystem.I18n.tn(key, count, vars);
 
         // Columnas de cada tabla: de aquí salen los encabezados, las celdas y el orden
         const COLUMNS = {
             negative: [
-                { key: 'code', label: 'Código', value: p => p.code },
-                { key: 'name', label: 'Nombre', value: p => p.name || '' },
-                { key: 'warehouses', label: 'Almacenes', value: p => Array.from(p.warehouses).sort().join(', ') },
-                { key: 'palletCount', label: 'Pallets', numeric: true, value: p => p.palletCount },
-                { key: 'totalNegative', label: 'Balance total', numeric: true, value: p => p.totalNegative, signed: true },
-                { key: 'totalAvailable', label: 'Disponible', numeric: true, value: p => p.totalAvailable, signed: true },
-                { key: null, label: 'Detalle', action: p => ({ text: 'Ver detalle', label: 'Ver detalle de ' + p.code, run: () => showProductDetailedView(p.code) }) }
+                { key: 'code', label: 'col.code', value: p => p.code },
+                { key: 'name', label: 'col.name', value: p => p.name || '' },
+                { key: 'warehouses', label: 'col.warehouses', value: p => Array.from(p.warehouses).sort().join(', ') },
+                { key: 'palletCount', label: 'col.pallets', numeric: true, value: p => p.palletCount },
+                { key: 'totalNegative', label: 'col.balance', numeric: true, value: p => p.totalNegative, signed: true },
+                { key: 'totalAvailable', label: 'col.available', numeric: true, value: p => p.totalAvailable, signed: true },
+                { key: null, label: 'col.detail', action: p => ({ text: t('action.viewDetail'), label: t('action.viewDetailOf', { code: p.code }), run: () => showProductDetailedView(p.code) }) }
             ],
             pallet: [
-                { key: 'palletId', label: 'ID de pallet', value: p => p.palletId },
-                { key: 'productCount', label: 'Productos', numeric: true, value: p => p.products.length },
-                { key: 'negativeProducts', label: 'Productos negativos', numeric: true, value: p => p.negativeProducts, badge: true },
-                { key: 'totalInventory', label: 'Inventario total', numeric: true, value: p => p.totalInventory, signed: true },
-                { key: null, label: 'Detalle', action: p => ({ text: 'Ver productos', label: 'Ver productos del pallet ' + p.palletId, run: () => showPalletDetails(p.palletId) }) }
+                { key: 'palletId', label: 'col.palletId', value: p => p.palletId },
+                { key: 'productCount', label: 'col.products', numeric: true, value: p => p.products.length },
+                { key: 'negativeProducts', label: 'col.negativeProducts', numeric: true, value: p => p.negativeProducts, badge: true },
+                { key: 'totalInventory', label: 'col.totalInventory', numeric: true, value: p => p.totalInventory, signed: true },
+                { key: null, label: 'col.detail', action: p => ({ text: t('action.viewProducts'), label: t('action.viewProductsOf', { id: p.palletId }), run: () => showPalletDetails(p.palletId) }) }
             ],
             all: [
-                { key: 'code', label: 'Código', value: i => i.code },
-                { key: 'name', label: 'Nombre', value: i => i.name || '' },
-                { key: 'warehouse', label: 'Almacén', value: i => i.warehouse || '' },
-                { key: 'palletId', label: 'ID de pallet', value: i => i.palletId || '', empty: 'Sin pallet' },
-                { key: 'physicalInventory', label: 'Inventario físico', numeric: true, value: i => i.physicalInventory, signed: true },
-                { key: 'available', label: 'Disponible', numeric: true, value: i => i.available, signed: true }
+                { key: 'code', label: 'col.code', value: i => i.code },
+                { key: 'name', label: 'col.name', value: i => i.name || '' },
+                { key: 'warehouse', label: 'col.warehouse', value: i => i.warehouse || '' },
+                { key: 'palletId', label: 'col.palletId', value: i => i.palletId || '', empty: 'value.noPallet' },
+                { key: 'physicalInventory', label: 'col.physical', numeric: true, value: i => i.physicalInventory, signed: true },
+                { key: 'available', label: 'col.available', numeric: true, value: i => i.available, signed: true }
             ]
-        };
-
-        const EMPTY_TEXT = {
-            negative: { none: 'Ningún producto tiene inventario negativo.', filtered: 'Ningún producto negativo coincide con la búsqueda o los almacenes elegidos.' },
-            pallet: { none: 'El archivo no trae IDs de pallet.', filtered: 'Ningún pallet coincide con la búsqueda.' },
-            all: { none: 'No hay filas de inventario.', filtered: 'Ninguna fila coincide con la búsqueda y los filtros.' }
-        };
-        const NOUNS = {
-            negative: ['producto', 'productos'],
-            pallet: ['pallet', 'pallets'],
-            all: ['fila', 'filas']
         };
 
         // Elementos DOM para pestañas
@@ -159,7 +150,7 @@
                 PAGE_SIZES.forEach(size => {
                     const option = document.createElement('option');
                     option.value = size;
-                    option.textContent = size + ' por página';
+                    option.textContent = t('filter.pageSize', { n: size });
                     select.appendChild(option);
                 });
                 select.value = pageSize;
@@ -268,7 +259,7 @@
                 if (!column.key) {
                     const hidden = document.createElement('span');
                     hidden.className = 'sr-only';
-                    hidden.textContent = column.label;
+                    hidden.textContent = t(column.label);
                     th.appendChild(hidden);
                 } else {
                     const active = state.key === column.key;
@@ -278,10 +269,10 @@
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'sort-btn' + (active ? ' is-active' : '');
-                    button.title = 'Ordenar por ' + column.label.toLowerCase();
+                    button.title = t('col.sortBy', { column: t(column.label).toLowerCase() });
 
                     const text = document.createElement('span');
-                    text.textContent = column.label;
+                    text.textContent = t(column.label);
                     const arrow = document.createElement('i');
                     arrow.setAttribute('aria-hidden', 'true');
                     arrow.className = 'fas ' + (active ? (state.dir === 'asc' ? 'fa-arrow-up' : 'fa-arrow-down') : 'fa-sort');
@@ -314,7 +305,7 @@
                 row.className = 'empty-row';
                 const cell = document.createElement('td');
                 cell.colSpan = columns.length;
-                cell.textContent = hasActiveFilters(type) ? EMPTY_TEXT[type].filtered : EMPTY_TEXT[type].none;
+                cell.textContent = t('empty.' + type + (hasActiveFilters(type) ? '.filtered' : ''));
                 row.appendChild(cell);
                 body.appendChild(row);
                 return;
@@ -339,7 +330,7 @@
 
                 columns.forEach(column => {
                     const cell = document.createElement('td');
-                    cell.setAttribute('data-label', column.label);
+                    cell.setAttribute('data-label', t(column.label));
 
                     if (column.action) {
                         const action = column.action(item);
@@ -365,7 +356,7 @@
                                 if (column.signed && value < 0) cell.classList.add('is-negative');
                             }
                         } else if (value === '' && column.empty) {
-                            cell.textContent = column.empty;
+                            cell.textContent = t(column.empty);
                             cell.classList.add('is-muted');
                         } else {
                             cell.textContent = value;
@@ -518,16 +509,17 @@
                 const template = document.getElementById('product-detail-modal-template');
                 const modal = document.importNode(template.content, true).querySelector('.modal');
 
-                modal.querySelector('.product-title').textContent = product.name || 'Producto sin nombre';
-                modal.querySelector('.product-code').textContent = 'Código ' + product.code;
+                InventorySystem.I18n.applyStatic(modal);
+                modal.querySelector('.product-title').textContent = product.name || t('value.noName');
+                modal.querySelector('.product-code').textContent = t('detail.code', { code: product.code });
 
                 // Resumen
                 const summary = modal.querySelector('.product-summary');
                 const summaryItems = [
-                    { label: 'Balance total', value: fmt(product.totalNegative), isNegative: true },
-                    { label: 'Disponible total', value: fmt(product.totalAvailable) },
-                    { label: 'Almacenes', value: product.warehouses.size },
-                    { label: 'Pallets', value: product.palletCount }
+                    { label: t('detail.balance'), value: fmt(product.totalNegative), isNegative: true },
+                    { label: t('detail.available'), value: fmt(product.totalAvailable) },
+                    { label: t('col.warehouses'), value: product.warehouses.size },
+                    { label: t('col.pallets'), value: product.palletCount }
                 ];
 
                 summaryItems.forEach(item => {
@@ -575,11 +567,11 @@
                     };
                     const balance = groupedRecords[groupKey(record)];
 
-                    addCell('Almacén', record.warehouse || 'Sin almacén', { muted: !record.warehouse });
-                    addCell('ID de pallet', record.palletId || 'Sin pallet', { muted: !record.palletId });
-                    addCell('Inventario físico', fmt(record.physicalInventory), { numeric: true, negative: record.physicalInventory < 0 });
-                    addCell('Disponible', fmt(record.available), { numeric: true, negative: record.available < 0 });
-                    addCell('Balance del pallet', fmt(balance), { numeric: true, negative: balance < 0 });
+                    addCell(t('col.warehouse'), record.warehouse || t('value.noWarehouse'), { muted: !record.warehouse });
+                    addCell(t('col.palletId'), record.palletId || t('value.noPallet'), { muted: !record.palletId });
+                    addCell(t('col.physical'), fmt(record.physicalInventory), { numeric: true, negative: record.physicalInventory < 0 });
+                    addCell(t('col.available'), fmt(record.available), { numeric: true, negative: record.available < 0 });
+                    addCell(t('col.palletBalance'), fmt(balance), { numeric: true, negative: balance < 0 });
 
                     tableBody.appendChild(row);
                 });
@@ -596,7 +588,7 @@
                 modal.querySelector('.close-btn').focus();
             } catch (error) {
                 console.error('Error al mostrar detalle del producto:', error);
-                InventorySystem.Utils.showError('No se pudo abrir el detalle del producto');
+                InventorySystem.Utils.showError(t('detail.error'));
             }
         }
 
@@ -684,12 +676,15 @@
                 if (totalItems === 0) {
                     countEl.textContent = '';
                 } else {
-                    const noun = NOUNS[pageType][totalItems === 1 ? 0 : 1];
                     const first = (currentPageNum - 1) * pageSize + 1;
                     const last = Math.min(currentPageNum * pageSize, totalItems);
                     countEl.textContent = totalItems <= pageSize
-                        ? fmt(totalItems) + ' ' + noun
-                        : fmt(first) + '–' + fmt(last) + ' de ' + fmt(totalItems) + ' ' + noun;
+                        ? tn('count.' + pageType, totalItems, { n: fmt(totalItems) })
+                        : t('count.range', {
+                            first: fmt(first),
+                            last: fmt(last),
+                            total: tn('count.' + pageType, totalItems, { n: fmt(totalItems) })
+                        });
                 }
             }
 
@@ -720,7 +715,7 @@
                 paginationElement.appendChild(gap);
             };
 
-            addButton('‹', currentPageNum - 1, { nav: true, label: 'Página anterior', disabled: currentPageNum === 1 });
+            addButton('‹', currentPageNum - 1, { nav: true, label: t('page.prev'), disabled: currentPageNum === 1 });
 
             // Primera, última y una ventana alrededor de la página actual
             const windowSize = 1;
@@ -735,7 +730,7 @@
             if (endPage < totalPages - 1) addGap();
             addButton(String(totalPages), totalPages);
 
-            addButton('›', currentPageNum + 1, { nav: true, label: 'Página siguiente', disabled: currentPageNum === totalPages });
+            addButton('›', currentPageNum + 1, { nav: true, label: t('page.next'), disabled: currentPageNum === totalPages });
         }
 
         /**
@@ -768,7 +763,7 @@
             
             // Llenar el select original (necesario para el multi-select)
             // Filtro de almacén para inventario negativo
-            negativeWarehouseFilter.innerHTML = '<option value="">Todos los almacenes</option>';
+            negativeWarehouseFilter.innerHTML = '<option value="">' + t('ms.all') + '</option>';
             warehouseOptions.forEach(warehouse => {
                 const option = document.createElement('option');
                 option.value = warehouse;
@@ -777,7 +772,7 @@
             });
             
             // Filtro de almacén para todo el inventario
-            allWarehouseFilter.innerHTML = '<option value="">Todos los almacenes</option>';
+            allWarehouseFilter.innerHTML = '<option value="">' + t('ms.all') + '</option>';
             warehouseOptions.forEach(warehouse => {
                 const option = document.createElement('option');
                 option.value = warehouse;
@@ -797,12 +792,14 @@
                 
                 // Crear nuevas instancias
                 negativeWarehouseMultiSelect = new window.MultiSelect(negativeWarehouseFilter, {
-                    placeholder: 'Todos los almacenes',
-                    searchPlaceholder: 'Buscar almacén...',
-                    selectAllText: 'Todos',
-                    clearText: 'Limpiar',
-                    applyText: 'Aplicar Filtro',
-                    noResultsText: 'No se encontraron almacenes',
+                    placeholder: t('ms.all'),
+                    searchPlaceholder: t('ms.search'),
+                    selectAllText: t('ms.selectAll'),
+                    clearText: t('ms.clear'),
+                    applyText: t('ms.apply'),
+                    noResultsText: t('ms.none'),
+                    allSelectedText: t('ms.all'),
+                    countText: count => t('ms.count', { n: count }),
                     maxDisplay: 2,
                     onApply: function(selected) {
                                                 filterNegativeInventory();
@@ -810,12 +807,14 @@
                 });
                 
                 allWarehouseMultiSelect = new window.MultiSelect(allWarehouseFilter, {
-                    placeholder: 'Todos los almacenes',
-                    searchPlaceholder: 'Buscar almacén...',
-                    selectAllText: 'Todos',
-                    clearText: 'Limpiar',
-                    applyText: 'Aplicar Filtro',
-                    noResultsText: 'No se encontraron almacenes',
+                    placeholder: t('ms.all'),
+                    searchPlaceholder: t('ms.search'),
+                    selectAllText: t('ms.selectAll'),
+                    clearText: t('ms.clear'),
+                    applyText: t('ms.apply'),
+                    noResultsText: t('ms.none'),
+                    allSelectedText: t('ms.all'),
+                    countText: count => t('ms.count', { n: count }),
                     maxDisplay: 2,
                     onApply: function(selected) {
                                                 filterAllInventory();
@@ -883,6 +882,60 @@
             });
         }
         
+        /**
+         * Volver a escribir la interfaz en el idioma elegido, sin perder filtros
+         */
+        function refreshLanguage() {
+            setupPageSizeLabels();
+            Object.keys(COLUMNS).forEach(renderTableHead);
+            if (!document.body.classList.contains('has-data')) return;
+
+            const selectedNegative = getSelectedNegativeWarehouses();
+            const selectedAll = getSelectedAllWarehouses();
+            updateWarehouseFilters();
+            if (negativeWarehouseMultiSelect) negativeWarehouseMultiSelect.setSelectedValues(selectedNegative);
+            if (allWarehouseMultiSelect) allWarehouseMultiSelect.setSelectedValues(selectedAll);
+
+            const activeTab = document.querySelector('.tab.active');
+            if (activeTab) switchTab(activeTab.getAttribute('data-tab'));
+        }
+
+        function setupPageSizeLabels() {
+            document.querySelectorAll('.page-size-select option').forEach(option => {
+                option.textContent = t('filter.pageSize', { n: option.value });
+            });
+        }
+
+        /**
+         * Abrir el inventario completo con una búsqueda o filtros ya puestos
+         * @param {Object} filters - { search, status, warehouses }
+         */
+        function showAllInventory(filters) {
+            const options = filters || {};
+            allSearch.value = options.search !== undefined ? String(options.search) : '';
+            allStatusFilter.value = options.status || '';
+            if (allWarehouseMultiSelect) {
+                allWarehouseMultiSelect.setSelectedValues(options.warehouses || []);
+            }
+            switchTab('all-inventory');
+            scrollToTabs();
+        }
+
+        /**
+         * Abrir el inventario negativo buscando un producto
+         */
+        function showNegativeInventory(search) {
+            negativeSearch.value = search !== undefined ? String(search) : '';
+            if (negativeWarehouseMultiSelect) negativeWarehouseMultiSelect.setSelectedValues([]);
+            switchTab('negative-inventory');
+            scrollToTabs();
+        }
+
+        function scrollToTabs() {
+            const tabList = document.querySelector('.tabs');
+            if (tabList && tabList.scrollIntoView) tabList.scrollIntoView({ block: 'start' });
+        }
+
         /**
          * Obtener paginación actual
          */
@@ -953,7 +1006,10 @@
             refreshPageContent,
             getSelectedNegativeWarehouses,
             getSelectedAllWarehouses,
-            resetMultiSelects
+            resetMultiSelects,
+            refreshLanguage,
+            showAllInventory,
+            showNegativeInventory
         };
     })();
 })(window.InventorySystem || {});

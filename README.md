@@ -283,6 +283,19 @@ Cada pestaña tiene su botón de exportación específico.
 
 ---
 
+## 🌐 Idioma y resumen del dashboard
+
+- **Idioma de la interfaz:** el selector ES / EN de la cabecera cambia textos, formato de números y fechas.
+  La elección se recuerda en el navegador; la primera vez se usa el idioma del navegador.
+  Los textos propios están en `js/i18n.js` (`TEXTS`); los de los módulos de gráficos y exportación se
+  traducen con la tabla `PHRASES` del mismo archivo. Los reportes exportados (PDF, Excel, impresión)
+  se generan en español.
+- **Resumen del dashboard:** `js/dashboard-summary.js` dibuja, encima de los gráficos, qué revisar,
+  cifras clave y cuatro clasificaciones (faltantes, negativos compensados entre pallets, stock por
+  almacén y productos con más stock). Cada elemento abre la tabla correspondiente ya filtrada.
+
+---
+
 ## 📄 Formato de Excel Requerido
 
 ### Columnas Obligatorias ⚠️

@@ -479,22 +479,7 @@
          * ✨ MEJORA 8: Mejorar elementos existentes
          */
         function enhanceExistingElements() {
-            // Mejorar botones existentes
-            const buttons = document.querySelectorAll('.btn, button');
-            buttons.forEach(btn => {
-                if (!btn.classList.contains('enhanced')) {
-                    btn.style.transition = 'all 0.3s ease';
-                    btn.addEventListener('mouseenter', function() {
-                        this.style.transform = 'translateY(-2px)';
-                        this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-                    });
-                    btn.addEventListener('mouseleave', function() {
-                        this.style.transform = 'translateY(0)';
-                        this.style.boxShadow = 'none';
-                    });
-                    btn.classList.add('enhanced');
-                }
-            });
+            // (El efecto al pasar el ratón sobre los botones se define ahora en CSS)
             
             // Mejorar gráficos existentes añadiendo botones de exportación
             setTimeout(() => {

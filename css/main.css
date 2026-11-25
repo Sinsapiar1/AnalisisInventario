@@ -152,6 +152,37 @@ h1, h2, h3 {
     text-overflow: ellipsis;
 }
 
+/* Selector de idioma */
+.lang-switch {
+    display: inline-flex;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.lang-switch button {
+    appearance: none;
+    min-width: 42px;
+    min-height: 38px;
+    padding: 0 0.6rem;
+    border: 0;
+    background: transparent;
+    color: #c9d2da;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.lang-switch button:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-switch button.is-active {
+    background: var(--amber);
+    color: var(--ink);
+}
+
 .container {
     max-width: 1280px;
     margin: 0 auto;

@@ -26,6 +26,8 @@
                 clearText: options.clearText || 'Limpiar',
                 applyText: options.applyText || 'Aplicar',
                 noResultsText: options.noResultsText || 'No se encontraron resultados',
+                allSelectedText: options.allSelectedText || null,
+                countText: options.countText || null,
                 maxDisplay: options.maxDisplay || 3,
                 onChange: options.onChange || null,
                 onApply: options.onApply || null
@@ -362,7 +364,7 @@
                 this.label.textContent = this.config.placeholder;
                 this.label.classList.add('placeholder');
             } else if (count === total) {
-                this.label.textContent = 'Todos los almacenes';
+                this.label.textContent = this.config.allSelectedText || 'Todos los almacenes';
                 this.label.classList.remove('placeholder');
             } else if (count <= this.config.maxDisplay) {
                 // Mostrar nombres de los seleccionados
@@ -374,7 +376,9 @@
                 this.label.classList.remove('placeholder');
             } else {
                 // Mostrar contador
-                this.label.textContent = `${count} almacenes seleccionados`;
+                this.label.textContent = typeof this.config.countText === 'function'
+                    ? this.config.countText(count)
+                    : `${count} almacenes seleccionados`;
                 this.label.classList.remove('placeholder');
             }
             

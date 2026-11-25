@@ -8,12 +8,19 @@ const InventorySystem = window.InventorySystem || {};
 // Módulo de utilidades
 InventorySystem.Utils = (function() {
 
-    // 'always' agrupa también los números de 4 cifras (1.269); es-ES no lo hace por defecto
-    const numberFormatter = new Intl.NumberFormat('es-ES', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-        useGrouping: 'always'
-    });
+    // Formato según el idioma elegido: 1.269,5 en español, 1,269.5 en inglés.
+    // 'always' agrupa también los números de 4 cifras, que es-ES deja sin punto.
+    const numberFormatters = {};
+
+    function currentLocale() {
+        const i18n = window.InventorySystem && window.InventorySystem.I18n;
+        return i18n ? i18n.getLocale() : 'es-ES';
+    }
+
+    function tr(key, fallback) {
+        const i18n = window.InventorySystem && window.InventorySystem.I18n;
+        return i18n ? i18n.t(key) : fallback;
+    }
 
     /**
      * Formatea un número para mostrar
@@ -21,8 +28,16 @@ InventorySystem.Utils = (function() {
      * @returns {string} - Número formateado
      */
     function formatNumber(num) {
+        const locale = currentLocale();
+        if (!numberFormatters[locale]) {
+            numberFormatters[locale] = new Intl.NumberFormat(locale, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+                useGrouping: 'always'
+            });
+        }
         const n = Number(num);
-        return numberFormatter.format(isFinite(n) ? n : 0);
+        return numberFormatters[locale].format(isFinite(n) ? n : 0);
     }
 
     /**
@@ -104,7 +119,7 @@ InventorySystem.Utils = (function() {
     function formatDate(date) {
         if (!date) return '';
 
-        return new Intl.DateTimeFormat('es-ES', {
+        return new Intl.DateTimeFormat(currentLocale(), {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -160,6 +175,12 @@ InventorySystem.Utils = (function() {
         if (signature === lastToast.text && now - lastToast.time < 1500) return;
         lastToast = { text: signature, time: now };
 
+        // Los avisos de los módulos anteriores llegan en español
+        const i18n = window.InventorySystem && window.InventorySystem.I18n;
+        if (i18n) {
+            message = i18n.translatePhrase(message) || message;
+        }
+
         const region = getToastRegion();
         const toast = document.createElement('div');
         toast.className = 'toast toast-' + type;
@@ -185,7 +206,7 @@ InventorySystem.Utils = (function() {
         const close = document.createElement('button');
         close.type = 'button';
         close.className = 'toast-close';
-        close.setAttribute('aria-label', 'Cerrar aviso');
+        close.setAttribute('aria-label', tr('action.closeToast', 'Cerrar aviso'));
         close.textContent = '×';
 
         function dismiss() {

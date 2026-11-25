@@ -31,17 +31,21 @@
     <link rel="stylesheet" href="css/theme.css">
 </head>
 <body>
-    <a class="skip-link" href="#main">Ir al contenido</a>
+    <a class="skip-link" href="#main" data-i18n="app.skip">Ir al contenido</a>
 
     <header class="app-header">
         <div class="logo">
             <span class="logo-mark" aria-hidden="true"></span>
-            <h1>Análisis de inventario</h1>
+            <h1 data-i18n="app.title">Análisis de inventario</h1>
         </div>
         <div class="header-actions">
+            <div class="lang-switch" role="group" aria-label="Idioma" data-i18n-attr="aria-label:app.language">
+                <button type="button" data-lang="es" aria-pressed="true" title="Español">ES</button>
+                <button type="button" data-lang="en" aria-pressed="false" title="English">EN</button>
+            </div>
             <button class="btn-streamlit" id="streamlit-btn" type="button">
                 <i class="fas fa-chart-line" aria-hidden="true"></i>
-                <span>Análisis histórico</span>
+                <span data-i18n="app.history">Análisis histórico</span>
             </button>
         </div>
     </header>
@@ -50,22 +54,22 @@
         <input type="file" id="file-input" class="sr-only" accept=".xlsx,.xlsm,.xls,.csv" tabindex="-1" aria-hidden="true" />
 
         <!-- Carga de archivo -->
-        <section class="admin-controls" id="admin-controls" aria-label="Archivo de inventario">
+        <section class="admin-controls" id="admin-controls" aria-label="Archivo de inventario" data-i18n-attr="aria-label:upload.region">
             <!-- Sin datos: área para soltar o elegir el archivo -->
             <div class="dropzone" id="dropzone">
                 <div class="dropzone-art" aria-hidden="true">
                     <span></span><span></span><span></span><span></span><span></span><span></span>
                 </div>
                 <div class="dropzone-copy">
-                    <h2>Cargue el stock exportado de Axapta</h2>
-                    <p>Arrastre aquí el Excel o elíjalo desde su equipo. Sirve la exportación en español o en inglés, con las columnas en cualquier orden.</p>
-                    <button type="button" class="btn btn-primary btn-lg js-pick-file"><i class="fas fa-folder-open" aria-hidden="true"></i> Elegir archivo</button>
+                    <h2 data-i18n="upload.title">Cargue el stock exportado de Axapta</h2>
+                    <p data-i18n="upload.text">Arrastre aquí el Excel o elíjalo desde su equipo. Sirve la exportación en español o en inglés, con las columnas en cualquier orden.</p>
+                    <button type="button" class="btn btn-primary btn-lg js-pick-file"><i class="fas fa-folder-open" aria-hidden="true"></i> <span data-i18n="upload.choose">Elegir archivo</span></button>
                     <dl class="dropzone-needs">
-                        <dt>Columnas obligatorias</dt>
+                        <dt data-i18n="upload.required">Columnas obligatorias</dt>
                         <dd>Código <span>Item number</span></dd>
                         <dd>Inventario físico <span>Physical stock</span></dd>
                     </dl>
-                    <p class="dropzone-privacy"><i class="fas fa-lock" aria-hidden="true"></i> El archivo se analiza en este navegador; no se sube a ningún servidor.</p>
+                    <p class="dropzone-privacy"><i class="fas fa-lock" aria-hidden="true"></i> <span data-i18n="upload.privacy">El archivo se analiza en este navegador; no se sube a ningún servidor.</span></p>
                 </div>
             </div>
 
@@ -74,47 +78,47 @@
                 <i class="fas fa-file-excel file-bar-icon" aria-hidden="true"></i>
                 <div class="file-bar-main">
                     <div class="file-bar-title">
-                        <span class="file-name" id="file-name">Inventario guardado</span>
+                        <span class="file-name" id="file-name"></span>
                         <span class="file-updated" id="last-update"></span>
                     </div>
                     <div class="file-summary" id="file-summary"></div>
                 </div>
                 <div class="file-bar-actions">
                     <span id="export-all-slot"></span>
-                    <button type="button" class="btn btn-quiet js-pick-file" id="change-file-btn"><i class="fas fa-arrows-rotate" aria-hidden="true"></i> Cambiar archivo</button>
-                    <button class="btn btn-quiet" id="clear-data-btn" type="button"><i class="fas fa-xmark" aria-hidden="true"></i> Quitar</button>
+                    <button type="button" class="btn btn-quiet js-pick-file" id="change-file-btn"><i class="fas fa-arrows-rotate" aria-hidden="true"></i> <span data-i18n="file.change">Cambiar archivo</span></button>
+                    <button class="btn btn-quiet" id="clear-data-btn" type="button"><i class="fas fa-xmark" aria-hidden="true"></i> <span data-i18n="file.remove">Quitar</span></button>
                 </div>
             </div>
         </section>
 
         <!-- Análisis de inventario -->
-        <section class="card hidden" id="inventory-analysis" aria-label="Análisis de inventario">
+        <section class="card hidden" id="inventory-analysis" aria-label="Análisis de inventario" data-i18n-attr="aria-label:app.title">
             <!-- Estadísticas generales -->
             <div class="stats-grid">
                 <div class="stat-card negative">
-                    <h3>Productos con inventario negativo</h3>
+                    <h3 data-i18n="stats.negative">Productos con inventario negativo</h3>
                     <div class="stat-value" id="negative-inventory">0</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Total de productos</h3>
+                    <h3 data-i18n="stats.products">Total de productos</h3>
                     <div class="stat-value" id="total-products">0</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Total de inventario físico</h3>
+                    <h3 data-i18n="stats.physical">Total de inventario físico</h3>
                     <div class="stat-value" id="total-inventory-value">0</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Pallets únicos</h3>
+                    <h3 data-i18n="stats.pallets">Pallets únicos</h3>
                     <div class="stat-value" id="unique-pallets">0</div>
                 </div>
             </div>
 
             <!-- Pestañas -->
-            <div class="tabs" role="tablist" aria-label="Vistas del inventario">
-                <button type="button" role="tab" class="tab active" data-tab="negative-inventory" aria-selected="true">Inventario negativo</button>
-                <button type="button" role="tab" class="tab" data-tab="pallet-analysis" aria-selected="false">Por pallet</button>
-                <button type="button" role="tab" class="tab" data-tab="all-inventory" aria-selected="false">Inventario completo</button>
-                <button type="button" role="tab" class="tab" data-tab="dashboard" aria-selected="false">Dashboard</button>
+            <div class="tabs" role="tablist" aria-label="Vistas del inventario" data-i18n-attr="aria-label:tabs.label">
+                <button type="button" role="tab" class="tab active" data-tab="negative-inventory" aria-selected="true" data-i18n="tabs.negative">Inventario negativo</button>
+                <button type="button" role="tab" class="tab" data-tab="pallet-analysis" aria-selected="false" data-i18n="tabs.pallet">Por pallet</button>
+                <button type="button" role="tab" class="tab" data-tab="all-inventory" aria-selected="false" data-i18n="tabs.all">Inventario completo</button>
+                <button type="button" role="tab" class="tab" data-tab="dashboard" aria-selected="false" data-i18n="tabs.dashboard">Dashboard</button>
             </div>
 
             <!-- Contenido de la pestaña: Inventario Negativo -->
@@ -122,11 +126,11 @@
                 <div class="table-toolbar">
                     <div class="search-container">
                         <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
-                        <input type="search" class="search-input" id="negative-search" placeholder="Código o nombre" aria-label="Buscar producto por código o nombre">
+                        <input type="search" class="search-input" id="negative-search" placeholder="Código o nombre" aria-label="Buscar producto por código o nombre" data-i18n-attr="placeholder:search.negative;aria-label:search.negative.label">
                     </div>
                     <div class="filter-container">
-                        <select class="filter-select" id="negative-warehouse-filter" aria-label="Filtrar por almacén">
-                            <option value="">Todos los almacenes</option>
+                        <select class="filter-select" id="negative-warehouse-filter" aria-label="Filtrar por almacén" data-i18n-attr="aria-label:filter.warehouse.label">
+                            <option value="" data-i18n="ms.all">Todos los almacenes</option>
                         </select>
                     </div>
                     <!-- Aquí se agregan los botones de exportación -->
@@ -142,7 +146,7 @@
                 <div class="table-footer">
                     <span class="result-count" id="negative-count" aria-live="polite"></span>
                     <div class="pagination" id="negative-pagination"></div>
-                    <select class="page-size-select" data-table="negative" aria-label="Filas por página"></select>
+                    <select class="page-size-select" data-table="negative" aria-label="Filas por página" data-i18n-attr="aria-label:filter.pageSize.label"></select>
                 </div>
             </div>
 
@@ -151,7 +155,7 @@
                 <div class="table-toolbar">
                     <div class="search-container">
                         <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
-                        <input type="search" class="search-input" id="pallet-search" placeholder="ID de pallet" aria-label="Buscar por ID de pallet">
+                        <input type="search" class="search-input" id="pallet-search" placeholder="ID de pallet" aria-label="Buscar por ID de pallet" data-i18n-attr="placeholder:search.pallet;aria-label:search.pallet.label">
                     </div>
                     <!-- Aquí se agregan los botones de exportación -->
                 </div>
@@ -166,7 +170,7 @@
                 <div class="table-footer">
                     <span class="result-count" id="pallet-count" aria-live="polite"></span>
                     <div class="pagination" id="pallet-pagination"></div>
-                    <select class="page-size-select" data-table="pallet" aria-label="Filas por página"></select>
+                    <select class="page-size-select" data-table="pallet" aria-label="Filas por página" data-i18n-attr="aria-label:filter.pageSize.label"></select>
                 </div>
             </div>
 
@@ -175,17 +179,17 @@
                 <div class="table-toolbar">
                     <div class="search-container">
                         <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
-                        <input type="search" class="search-input" id="all-search" placeholder="Código, nombre o pallet" aria-label="Buscar por código, nombre o pallet">
+                        <input type="search" class="search-input" id="all-search" placeholder="Código, nombre o pallet" aria-label="Buscar por código, nombre o pallet" data-i18n-attr="placeholder:search.all;aria-label:search.all.label">
                     </div>
                     <div class="filter-container">
-                        <select class="filter-select" id="all-warehouse-filter" aria-label="Filtrar por almacén">
-                            <option value="">Todos los almacenes</option>
+                        <select class="filter-select" id="all-warehouse-filter" aria-label="Filtrar por almacén" data-i18n-attr="aria-label:filter.warehouse.label">
+                            <option value="" data-i18n="ms.all">Todos los almacenes</option>
                         </select>
-                        <select class="filter-select" id="all-status-filter" aria-label="Filtrar por estado del inventario">
-                            <option value="">Todos los estados</option>
-                            <option value="positive">Inventario positivo</option>
-                            <option value="negative">Inventario negativo</option>
-                            <option value="zero">Inventario en cero</option>
+                        <select class="filter-select" id="all-status-filter" aria-label="Filtrar por estado del inventario" data-i18n-attr="aria-label:filter.status.label">
+                            <option value="" data-i18n="filter.status.all">Todos los estados</option>
+                            <option value="positive" data-i18n="filter.status.positive">Inventario positivo</option>
+                            <option value="negative" data-i18n="filter.status.negative">Inventario negativo</option>
+                            <option value="zero" data-i18n="filter.status.zero">Inventario en cero</option>
                         </select>
                     </div>
                     <!-- Aquí se agregan los botones de exportación -->
@@ -201,7 +205,7 @@
                 <div class="table-footer">
                     <span class="result-count" id="all-count" aria-live="polite"></span>
                     <div class="pagination" id="all-pagination"></div>
-                    <select class="page-size-select" data-table="all" aria-label="Filas por página"></select>
+                    <select class="page-size-select" data-table="all" aria-label="Filas por página" data-i18n-attr="aria-label:filter.pageSize.label"></select>
                 </div>
             </div>
 
@@ -216,7 +220,7 @@
     <div class="loading hidden" id="loading" role="status">
         <div class="loading-box">
             <div class="spinner" aria-hidden="true"></div>
-            <span>Leyendo el archivo…</span>
+            <span data-i18n="upload.reading">Leyendo el archivo…</span>
         </div>
     </div>
 
@@ -224,7 +228,7 @@
     <div class="drop-overlay" aria-hidden="true">
         <div class="drop-overlay-box">
             <i class="fas fa-file-arrow-down"></i>
-            <span>Suelte el archivo para analizarlo</span>
+            <span data-i18n="upload.drop">Suelte el archivo para analizarlo</span>
         </div>
     </div>
 
@@ -240,39 +244,39 @@
                 <i class="fas fa-external-link-alt"></i>
             </div>
             
-            <h2>Análisis Avanzado de Inventarios</h2>
+            <h2 data-i18n="hist.title">Análisis histórico de inventarios</h2>
             
             <div class="modal-description">
-                <p>Está a punto de abrir una <strong>nueva ventana</strong> con nuestra herramienta avanzada de análisis histórico de <strong>inventarios negativos</strong>.</p>
+                <p data-i18n="hist.text">Se abrirá en una ventana nueva la herramienta de análisis histórico de inventarios negativos.</p>
                 
                 <div class="modal-features">
                     <div class="feature-item">
                         <i class="fas fa-chart-bar"></i>
-                        <span>Análisis histórico detallado</span>
+                        <span data-i18n="hist.f1">Análisis histórico detallado</span>
                     </div>
                     <div class="feature-item">
                         <i class="fas fa-filter"></i>
-                        <span>Filtros avanzados por fecha</span>
+                        <span data-i18n="hist.f2">Filtros avanzados por fecha</span>
                     </div>
                     <div class="feature-item">
                         <i class="fas fa-download"></i>
-                        <span>Exportación de reportes</span>
+                        <span data-i18n="hist.f3">Exportación de reportes</span>
                     </div>
                 </div>
                 
                 <div class="modal-note">
                     <i class="fas fa-info-circle"></i>
                     <div>
-                        <strong>Nota importante:</strong> Esta herramienta funciona con <strong>Streamlit</strong>. Si la aplicación está inactiva, puede que necesites presionar el botón <strong>"Yes, get this app back up"</strong> para activarla (toma solo unos segundos).
+                        <span data-i18n="hist.note">Esta herramienta funciona con Streamlit. Si la aplicación está inactiva, pulse el botón "Yes, get this app back up" para activarla; tarda unos segundos.</span>
                     </div>
                 </div>
             </div>
             
             <div class="modal-actions">
-                <button class="btn-cancel" id="streamlit-cancel">Cancelar</button>
+                <button class="btn-cancel" id="streamlit-cancel" data-i18n="hist.cancel">Cancelar</button>
                 <button class="btn-confirm" id="streamlit-confirm">
                     <i class="fas fa-external-link-alt"></i>
-                    Abrir Análisis Avanzado
+                    <span data-i18n="hist.open">Abrir análisis histórico</span>
                 </button>
             </div>
         </div>
@@ -280,32 +284,32 @@
 
     <!-- Plantillas para los modales de detalle -->
     <template id="product-detail-modal-template">
-        <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del producto">
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Detalle del producto" data-i18n-attr="aria-label:detail.label">
             <div class="modal-content">
                 <div class="modal-head">
                     <div>
                         <h2 class="product-title"></h2>
                         <p class="product-code"></p>
                     </div>
-                    <button type="button" class="close-btn" aria-label="Cerrar detalle">×</button>
+                    <button type="button" class="close-btn" aria-label="Cerrar detalle" data-i18n-attr="aria-label:action.closeDetail">×</button>
                 </div>
                 <div class="product-summary"></div>
                 <div class="table-wrap">
                     <table class="detail-table data-table">
                         <thead>
                             <tr>
-                                <th scope="col">Almacén</th>
-                                <th scope="col">ID de pallet</th>
-                                <th scope="col" class="num">Inventario físico</th>
-                                <th scope="col" class="num">Disponible</th>
-                                <th scope="col" class="num">Balance del pallet</th>
+                                <th scope="col" data-i18n="col.warehouse">Almacén</th>
+                                <th scope="col" data-i18n="col.palletId">ID de pallet</th>
+                                <th scope="col" class="num" data-i18n="col.physical">Inventario físico</th>
+                                <th scope="col" class="num" data-i18n="col.available">Disponible</th>
+                                <th scope="col" class="num" data-i18n="col.palletBalance">Balance del pallet</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
                 </div>
                 <div class="modal-foot">
-                    <button type="button" class="btn btn-primary close-button">Cerrar</button>
+                    <button type="button" class="btn btn-primary close-button" data-i18n="action.close">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -313,6 +317,7 @@
 
     <!-- Orden correcto de scripts -->
         <script defer src="js/utils.js"></script>
+        <script defer src="js/i18n.js"></script>
         <script defer src="js/multi-select.js"></script>
         <script defer src="js/auth.js"></script>
         <script defer src="js/inventory.js"></script>
@@ -321,6 +326,7 @@
         <script defer src="js/charts-enhanced-v2.js"></script>
         <script defer src="js/charts-visual-enhanced.js"></script>
         <script defer src="js/enhanced-charts-visibility.js"></script>
+        <script defer src="js/dashboard-summary.js"></script>
         <script defer src="js/export.js"></script>
         <script defer src="js/streamlit-modal.js"></script>
         <script defer src="js/main.js"></script>

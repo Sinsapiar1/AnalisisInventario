@@ -210,8 +210,14 @@
     padding: 0.45rem 1rem;
 }
 
-.data-source-info {
-    display: none;
+/* El resumen nuevo sustituye a las tarjetas de métricas anteriores */
+.data-source-info,
+.enhanced-metrics-cards-v2 {
+    display: none !important;
+}
+
+.basic-charts-section .chart-container {
+    margin: 0;
 }
 
 /* ---------- Ventana de opciones de exportación ---------- */

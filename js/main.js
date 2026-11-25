@@ -9,6 +9,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Asegurarse de que window.InventorySystem existe
     window.InventorySystem = window.InventorySystem || {};
     
+    // Idioma: antes que el resto, porque los demás módulos piden sus textos
+    if (InventorySystem.I18n) {
+        InventorySystem.I18n.init();
+        InventorySystem.I18n.onChange(function() {
+            if (InventorySystem.Inventory) InventorySystem.Inventory.refreshLanguage();
+            if (InventorySystem.UI) InventorySystem.UI.refreshLanguage();
+        });
+    }
+
+    // Resumen del dashboard (se añade encima de los gráficos existentes)
+    if (InventorySystem.DashboardSummary) {
+        InventorySystem.DashboardSummary.install();
+    }
+
     // Inicializar módulos en el orden adecuado
     if (InventorySystem.Utils) {
         console.log('Módulo Utils inicializado correctamente');
@@ -79,6 +93,10 @@ window.addEventListener('error', function(e) {
     
     // Mostrar error al usuario si es crítico
     if (InventorySystem && InventorySystem.Utils) {
-        InventorySystem.Utils.showError('Ha ocurrido un error en la aplicación. Por favor, recargue la página.');
+        InventorySystem.Utils.showError(
+            InventorySystem.I18n && InventorySystem.I18n.getLang() === 'en'
+                ? 'Something went wrong in the app. Please reload the page.'
+                : 'Ha ocurrido un error en la aplicación. Por favor, recargue la página.'
+        );
     }
 });
