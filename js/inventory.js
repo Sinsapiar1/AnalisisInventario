@@ -603,7 +603,7 @@
          */
         function renderFileSummary() {
             lastUpdateEl.textContent = lastUpdate ?
-                'Cargado el ' + InventorySystem.Utils.formatDate(lastUpdate) : '';
+                'Última actualización: ' + InventorySystem.Utils.formatDate(lastUpdate) : '';
             if (!fileSummary) return;
 
             fileSummary.textContent = '';
