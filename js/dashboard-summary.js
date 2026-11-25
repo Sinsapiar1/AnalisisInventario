@@ -155,7 +155,8 @@
                 () => ui.showAllInventory({ status: 'negative' }));
         }
         if (data.noPalletRows > 0) {
-            add('note', t('dash.find.noPallet', { rows: fmt(data.noPalletRows), units: fmt(data.noPalletUnits) }));
+            add('note', t('dash.find.noPallet', { rows: fmt(data.noPalletRows), units: fmt(data.noPalletUnits) }),
+                () => ui.showAllInventory({ pallet: 'without' }));
         }
         if (data.zeroRows > 0) {
             add('note', t('dash.find.zero', { rows: fmt(data.zeroRows) }),

@@ -334,7 +334,8 @@
                 const inventoryData = InventorySystem.Inventory.getInventoryData();
                 
                 // Filtrar productos con inventario negativo
-                const negativeItems = inventoryData.filter(item => item.physicalInventory < 0);
+                // Agrupado por producto: antes salía una barra por pallet y el mismo producto se repetía
+                const negativeItems = InventorySystem.Utils.negativeUnitsByProduct(inventoryData);
                 
                 // Configurar gráfico
                 const chartElement = document.getElementById('negative-chart');

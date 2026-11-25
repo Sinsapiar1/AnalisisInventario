@@ -11,8 +11,6 @@
     <!-- Librerías externas (solo necesarias) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
     
     
@@ -100,7 +98,11 @@
                     <div class="stat-value" id="negative-inventory">0</div>
                 </div>
                 <div class="stat-card">
-                    <h3 data-i18n="stats.products">Total de productos</h3>
+                    <h3 data-i18n="stats.distinct">Productos distintos</h3>
+                    <div class="stat-value" id="distinct-products">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3 data-i18n="stats.products">Filas de inventario</h3>
                     <div class="stat-value" id="total-products">0</div>
                 </div>
                 <div class="stat-card">
@@ -115,7 +117,7 @@
 
             <!-- Pestañas -->
             <div class="tabs" role="tablist" aria-label="Vistas del inventario" data-i18n-attr="aria-label:tabs.label">
-                <button type="button" role="tab" class="tab active" data-tab="negative-inventory" aria-selected="true" data-i18n="tabs.negative">Inventario negativo</button>
+                <button type="button" role="tab" class="tab active" data-tab="negative-inventory" aria-selected="true"><span data-i18n="tabs.negative">Inventario negativo</span><span class="tab-count" id="negative-tab-count"></span></button>
                 <button type="button" role="tab" class="tab" data-tab="pallet-analysis" aria-selected="false" data-i18n="tabs.pallet">Por pallet</button>
                 <button type="button" role="tab" class="tab" data-tab="all-inventory" aria-selected="false" data-i18n="tabs.all">Inventario completo</button>
                 <button type="button" role="tab" class="tab" data-tab="dashboard" aria-selected="false" data-i18n="tabs.dashboard">Dashboard</button>
@@ -132,6 +134,7 @@
                         <select class="filter-select" id="negative-warehouse-filter" aria-label="Filtrar por almacén" data-i18n-attr="aria-label:filter.warehouse.label">
                             <option value="" data-i18n="ms.all">Todos los almacenes</option>
                         </select>
+                        <button type="button" class="btn-link clear-filters hidden" data-table="negative" data-i18n="filter.clear">Limpiar filtros</button>
                     </div>
                     <!-- Aquí se agregan los botones de exportación -->
                 </div>
@@ -191,6 +194,12 @@
                             <option value="negative" data-i18n="filter.status.negative">Inventario negativo</option>
                             <option value="zero" data-i18n="filter.status.zero">Inventario en cero</option>
                         </select>
+                        <select class="filter-select" id="all-pallet-filter" aria-label="Filtrar por pallet" data-i18n-attr="aria-label:filter.pallet.label">
+                            <option value="" data-i18n="filter.pallet.all">Con y sin pallet</option>
+                            <option value="with" data-i18n="filter.pallet.with">Con ID de pallet</option>
+                            <option value="without" data-i18n="filter.pallet.without">Sin ID de pallet</option>
+                        </select>
+                        <button type="button" class="btn-link clear-filters hidden" data-table="all" data-i18n="filter.clear">Limpiar filtros</button>
                     </div>
                     <!-- Aquí se agregan los botones de exportación -->
                 </div>

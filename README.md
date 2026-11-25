@@ -548,10 +548,14 @@ isValidNumber(value) {
 
 ## 📚 Documentación Adicional
 
-En el repositorio encontrarás documentación detallada:
-
 | Archivo | Contenido |
 |---------|-----------|
+| `LEEME_PRIMERO.txt` | Guía rápida visual |
+| `GUIA_LICENCIAS.md` | Licencias |
+
+El historial de cambios está en los commits del repositorio.
+
+---------|-----------|
 | `CAMBIOS_HARD_REFRESH.md` | Implementación del hard refresh |
 | `CAMBIOS_STREAMLIT_BUTTON.md` | Botón de análisis avanzado |
 | `CAMBIOS_DASHBOARD_CARDS_PERSISTENTES.md` | Cards persistentes |

@@ -30,6 +30,8 @@
         const negativeInventory = document.getElementById('negative-inventory');
         const totalInventoryValue = document.getElementById('total-inventory-value');
         const uniquePallets = document.getElementById('unique-pallets');
+        const distinctProducts = document.getElementById('distinct-products');
+        const negativeTabCount = document.getElementById('negative-tab-count');
         
         /* =====================================================
          * Reconocimiento de columnas (Axapta en español e inglés)
@@ -269,6 +271,8 @@
                 if (negativeInventory) negativeInventory.textContent = '0';
                 if (totalInventoryValue) totalInventoryValue.textContent = '0';
                 if (uniquePallets) uniquePallets.textContent = '0';
+                if (distinctProducts) distinctProducts.textContent = '0';
+                if (negativeTabCount) negativeTabCount.textContent = '';
                 
                 // 3. Limpiar UI (tablas, gráficos, paginación)
                 if (typeof InventorySystem.UI !== 'undefined' && InventorySystem.UI.resetInventoryView) {
@@ -358,6 +362,8 @@
                     
                     // Resetear filtro de estado
                     const allStatusFilter = document.getElementById('all-status-filter');
+                    const allPalletFilter = document.getElementById('all-pallet-filter');
+                    if (allPalletFilter) allPalletFilter.value = '';
                     if (allStatusFilter) {
                         allStatusFilter.value = '';
                         console.log('  ✓ Filtro de estado reseteado');
@@ -654,7 +660,10 @@
          */
         function analyzeData() {
     // Estadísticas generales
-    totalProducts.textContent = inventoryData.length;
+    totalProducts.textContent = InventorySystem.Utils.formatNumber(inventoryData.length);
+    if (distinctProducts) {
+        distinctProducts.textContent = InventorySystem.Utils.formatNumber(new Set(inventoryData.map(item => item.code)).size);
+    }
     
     // Agrupar productos por código Y almacén, y calcular el balance total
     const productBalances = {};
@@ -686,8 +695,13 @@
         parseFloat(product.totalInventory) < 0
     );
     
-    // Actualizar contador de productos negativos
-    negativeInventory.textContent = negativeProducts.length;
+    // Contador de productos negativos: por código, igual que la tabla y el dashboard
+    // (un producto negativo en dos almacenes cuenta una vez)
+    const negativeCount = new Set(negativeProducts.map(product => product.code)).size;
+    negativeInventory.textContent = InventorySystem.Utils.formatNumber(negativeCount);
+    if (negativeTabCount) {
+        negativeTabCount.textContent = negativeCount > 0 ? InventorySystem.Utils.formatNumber(negativeCount) : '';
+    }
     
     // Calcular suma total del inventario físico
     const totalPhysical = inventoryData.reduce((sum, item) => {
@@ -707,7 +721,7 @@
             uniquePalletIds.add(item.palletId);
         }
     });
-    uniquePallets.textContent = uniquePalletIds.size;
+    uniquePallets.textContent = InventorySystem.Utils.formatNumber(uniquePalletIds.size);
     
     // Analizar datos por pallet
     analyzePalletData();

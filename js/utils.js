@@ -306,6 +306,25 @@ InventorySystem.Utils = (function() {
                warehouse !== '';
     }
 
+    /**
+     * Unidades en negativo por producto: suma las filas negativas de cada código.
+     * Devuelve elementos con la forma de una fila ({ code, name, physicalInventory })
+     * para que los gráficos no repitan el mismo producto una vez por pallet.
+     */
+    function negativeUnitsByProduct(rows) {
+        const byCode = new Map();
+        (rows || []).forEach(row => {
+            if (!(row.physicalInventory < 0)) return;
+            let item = byCode.get(row.code);
+            if (!item) {
+                item = { code: row.code, name: row.name || '', physicalInventory: 0 };
+                byCode.set(row.code, item);
+            }
+            item.physicalInventory += row.physicalInventory;
+        });
+        return Array.from(byCode.values());
+    }
+
     // Exportar funciones públicas
     return {
         formatNumber,
@@ -318,6 +337,7 @@ InventorySystem.Utils = (function() {
         isValidNumber,
         parseNumber,
         normalizeText,
+        negativeUnitsByProduct,
         debounce,
         createElementFromHTML,
         sanitizeWarehouse,

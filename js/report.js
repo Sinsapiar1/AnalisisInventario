@@ -178,6 +178,8 @@ tr.sub td:first-child { padding-left: 16px; color: #5a6875; }
             warehouses = ui.getSelectedAllWarehouses();
             const status = value('all-status-filter');
             if (status) parts.push(t('filter.status.' + status));
+            const pallet = value('all-pallet-filter');
+            if (pallet) parts.push(t('filter.pallet.' + pallet));
         }
         if (search) parts.unshift(t('report.filter.search', { text: search }));
         if (warehouses.length > 0) parts.push(t('report.filter.warehouses', { list: warehouses.join(', ') }));

@@ -52,7 +52,8 @@
         },
 
         'stats.negative': { es: 'Productos con inventario negativo', en: 'Products with negative inventory' },
-        'stats.products': { es: 'Total de productos', en: 'Total products' },
+        'stats.products': { es: 'Filas de inventario', en: 'Inventory rows' },
+        'stats.distinct': { es: 'Productos distintos', en: 'Distinct products' },
         'stats.physical': { es: 'Total de inventario físico', en: 'Total physical inventory' },
         'stats.pallets': { es: 'Pallets únicos', en: 'Unique pallets' },
 
@@ -75,6 +76,11 @@
         'filter.status.positive': { es: 'Inventario positivo', en: 'Positive inventory' },
         'filter.status.negative': { es: 'Inventario negativo', en: 'Negative inventory' },
         'filter.status.zero': { es: 'Inventario en cero', en: 'Zero inventory' },
+        'filter.pallet.label': { es: 'Filtrar por pallet', en: 'Filter by pallet' },
+        'filter.pallet.all': { es: 'Con y sin pallet', en: 'With and without pallet' },
+        'filter.pallet.with': { es: 'Con ID de pallet', en: 'With pallet ID' },
+        'filter.pallet.without': { es: 'Sin ID de pallet', en: 'No pallet ID' },
+        'filter.clear': { es: 'Limpiar filtros', en: 'Clear filters' },
         'filter.pageSize.label': { es: 'Filas por página', en: 'Rows per page' },
         'filter.pageSize': { es: '{n} por página', en: '{n} per page' },
 
@@ -365,6 +371,29 @@
         'Ej: 1': 'E.g. 1',
         'Ej: 10': 'E.g. 10',
         'Ej: 27143, 67032': 'E.g. 27143, 67032',
+
+        // Excel
+        'Estadísticas Generales': 'General statistics',
+        'Filas de Inventario': 'Inventory rows',
+        'Estadísticas': 'Statistics',
+        'Productos con Inventario Negativo': 'Products with negative inventory',
+        'Total de Inventario Físico': 'Total physical inventory',
+        'Pallets Únicos': 'Unique pallets',
+        'Fecha de Exportación': 'Export date',
+        'Última Actualización': 'Last updated',
+        'Almacenes': 'Warehouses',
+        'Nº Pallets': 'Pallets',
+        'Nº Productos': 'Products',
+        'Balance Total': 'Total balance',
+        'Disponible Total': 'Total available',
+        'Disponible': 'Available',
+        'Inventario Total': 'Total inventory',
+        'ID Pallet': 'Pallet ID',
+        'Inv. Físico': 'Physical inv.',
+        'Balance Ítem': 'Item balance',
+        'Análisis por Pallet': 'Pallet analysis',
+        'Inventario Completo': 'Full inventory',
+        'Inventario Completo (Actual)': 'Full inventory (current)',
 
         // Dashboard (secciones y tablas)
         'Análisis Detallado de Inventario': 'Detailed inventory analysis',

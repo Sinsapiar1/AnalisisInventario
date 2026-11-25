@@ -76,16 +76,8 @@ Si todo funciona correctamente, verás mensajes como estos:
 📚 DOCUMENTACIÓN COMPLETA
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Para más información, lee estos documentos:
-
-  📄 RESUMEN_MODIFICACIONES.md
-     → Vista rápida de todos los cambios
-
-  📄 CAMBIOS_HARD_REFRESH.md
-     → Documentación técnica detallada
-
-  📄 INSTRUCCIONES_DE_PRUEBA.md
-     → 7 pruebas completas paso a paso
+Para más información, lee README.md.
+El historial de cambios está en los commits del repositorio.
 
 
 ✨ ¿QUÉ SE LIMPIA AUTOMÁTICAMENTE?

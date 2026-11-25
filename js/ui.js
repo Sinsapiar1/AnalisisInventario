@@ -86,6 +86,7 @@
         const negativeWarehouseFilter = document.getElementById('negative-warehouse-filter');
         const allWarehouseFilter = document.getElementById('all-warehouse-filter');
         const allStatusFilter = document.getElementById('all-status-filter');
+        const allPalletFilter = document.getElementById('all-pallet-filter');
 
         // Instancias de multi-select
         let negativeWarehouseMultiSelect = null;
@@ -138,6 +139,12 @@
 
             // El filtro de almacén lo maneja el multi-select (ver updateWarehouseFilters)
             allStatusFilter.addEventListener('change', filterAllInventory);
+            allPalletFilter.addEventListener('change', filterAllInventory);
+
+            // "Limpiar filtros": aparece solo cuando hay alguno puesto
+            document.querySelectorAll('.clear-filters').forEach(button => {
+                button.addEventListener('click', () => clearFilters(button.getAttribute('data-table')));
+            });
         }
 
         /**
@@ -375,7 +382,8 @@
                 return negativeSearch.value.trim() !== '' || getSelectedNegativeWarehouses().length > 0;
             }
             if (type === 'pallet') return palletSearch.value.trim() !== '';
-            return allSearch.value.trim() !== '' || allStatusFilter.value !== '' || getSelectedAllWarehouses().length > 0;
+            return allSearch.value.trim() !== '' || allStatusFilter.value !== '' ||
+                allPalletFilter.value !== '' || getSelectedAllWarehouses().length > 0;
         }
 
         /**
@@ -387,7 +395,29 @@
             currentPage[type] = 1;
             renderTable(type, sorted);
             renderPagination(paginations[type], sorted.length, currentPage[type], type);
+
+            const clearButton = document.querySelector('.clear-filters[data-table="' + type + '"]');
+            if (clearButton) clearButton.classList.toggle('hidden', !hasActiveFilters(type));
             return sorted;
+        }
+
+        /**
+         * Quitar la búsqueda y los filtros de una tabla
+         */
+        function clearFilters(type) {
+            if (type === 'negative') {
+                negativeSearch.value = '';
+                if (negativeWarehouseMultiSelect) negativeWarehouseMultiSelect.setSelectedValues([]);
+                filterNegativeInventory();
+                negativeSearch.focus();
+            } else if (type === 'all') {
+                allSearch.value = '';
+                allStatusFilter.value = '';
+                allPalletFilter.value = '';
+                if (allWarehouseMultiSelect) allWarehouseMultiSelect.setSelectedValues([]);
+                filterAllInventory();
+                allSearch.focus();
+            }
         }
 
         /**
@@ -615,6 +645,7 @@
          */
         function showPalletDetails(palletId) {
             allStatusFilter.value = '';
+            allPalletFilter.value = '';
             if (allWarehouseMultiSelect && typeof allWarehouseMultiSelect.clearSelection === 'function') {
                 allWarehouseMultiSelect.clearSelection();
             }
@@ -633,6 +664,7 @@
 
             const searchTerm = allSearch.value.trim().toLowerCase();
             const statusFilter = allStatusFilter.value;
+            const palletFilter = allPalletFilter.value;
             const inventoryData = InventorySystem.Inventory.getInventoryData();
             const selectedWarehouses = getSelectedAllWarehouses();
 
@@ -655,7 +687,10 @@
                     matchesStatus = item.physicalInventory === 0;
                 }
 
-                return matchesSearch && matchesWarehouse && matchesStatus;
+                const matchesPallet = palletFilter === '' ||
+                    (palletFilter === 'with' ? !!item.palletId : !item.palletId);
+
+                return matchesSearch && matchesWarehouse && matchesStatus && matchesPallet;
             });
 
             showResults('all', filteredInventory);
@@ -908,12 +943,13 @@
 
         /**
          * Abrir el inventario completo con una búsqueda o filtros ya puestos
-         * @param {Object} filters - { search, status, warehouses }
+         * @param {Object} filters - { search, status, pallet, warehouses }
          */
         function showAllInventory(filters) {
             const options = filters || {};
             allSearch.value = options.search !== undefined ? String(options.search) : '';
             allStatusFilter.value = options.status || '';
+            allPalletFilter.value = options.pallet || '';
             if (allWarehouseMultiSelect) {
                 allWarehouseMultiSelect.setSelectedValues(options.warehouses || []);
             }

@@ -216,7 +216,8 @@
                 // =================== FIN DE LA CORRECCIÓN ====================
 
                 const inventoryData = InventorySystem.Inventory.getInventoryData();
-                const negativeItems = inventoryData.filter(item => item.physicalInventory < 0);
+                // Agrupado por producto: antes salía una barra por pallet y el mismo producto se repetía
+                const negativeItems = InventorySystem.Utils.negativeUnitsByProduct(inventoryData);
                 
                 const ctx = chartElement.getContext('2d');
                 

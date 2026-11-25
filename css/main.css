@@ -456,7 +456,7 @@ body:not(.has-data) #inventory-analysis {
 /* Estadísticas: una sola banda dividida, no cuatro tarjetas sueltas */
 .stats-grid {
     display: grid;
-    grid-template-columns: 1.3fr repeat(3, 1fr);
+    grid-template-columns: 1.3fr repeat(4, 1fr);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     margin-bottom: 1.5rem;
@@ -541,6 +541,44 @@ body:not(.has-data) #inventory-analysis {
     color: var(--ink);
     font-weight: 600;
     border-bottom-color: var(--amber);
+}
+
+.tab-count {
+    display: inline-block;
+    min-width: 1.5rem;
+    margin-left: 0.45rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    background: var(--red);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.tab-count:empty {
+    display: none;
+}
+
+.btn-link {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 0.4rem 0.2rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-link:hover {
+    color: var(--red);
 }
 
 .tab-content {
@@ -1082,7 +1120,6 @@ body.is-dragging .drop-overlay {
     }
 
     .stat-card:nth-child(4) {
-        grid-column: 1 / -1;
         border-left: 0;
     }
 
