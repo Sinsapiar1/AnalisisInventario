@@ -216,6 +216,48 @@
         'hist.cancel': { es: 'Cancelar', en: 'Cancel' },
         'hist.open': { es: 'Abrir análisis histórico', en: 'Open historical analysis' },
 
+        /* Informe para PDF */
+        'report.title': { es: 'Informe de inventario', en: 'Inventory report' },
+        'report.scope.pallet': { es: 'Análisis por pallet', en: 'Pallet analysis' },
+        'report.scope.dashboard': { es: 'Resumen del inventario', en: 'Inventory summary' },
+        'report.scope.complete': { es: 'Informe completo', en: 'Full report' },
+        'report.meta.file': { es: 'Archivo', en: 'File' },
+        'report.meta.loaded': { es: 'Datos cargados', en: 'Data loaded' },
+        'report.meta.generated': { es: 'Informe generado', en: 'Report generated' },
+        'report.meta.filters': { es: 'Filtros aplicados', en: 'Filters applied' },
+        'report.filter.search': { es: 'búsqueda "{text}"', en: 'search "{text}"' },
+        'report.filter.warehouses': { es: 'almacenes {list}', en: 'warehouses {list}' },
+        'report.kpi.rows': { es: 'Filas de inventario', en: 'Inventory rows' },
+        'report.rankings': { es: 'Clasificaciones', en: 'Rankings' },
+        'report.negative.title': { es: 'Productos con balance negativo', en: 'Products with a negative balance' },
+        'report.negative.note': {
+            es: 'Cada producto va seguido de sus registros por almacén y pallet.',
+            en: 'Each product is followed by its records by warehouse and pallet.'
+        },
+        'report.pallets.negative': { es: 'Pallets con productos en negativo', en: 'Pallets with negative products' },
+        'report.pallets.negative.note': {
+            es: 'Solo los pallets que tienen algún producto en negativo.',
+            en: 'Only pallets that hold at least one negative product.'
+        },
+        'report.complete.note': {
+            es: 'El listado fila a fila no se incluye aquí: genere el informe desde la pestaña Inventario completo, con los filtros que necesite, o expórtelo a Excel.',
+            en: 'The row-by-row listing is not included here: generate the report from the Full inventory tab, with the filters you need, or export it to Excel.'
+        },
+        'report.empty': { es: 'No hay registros que mostrar.', en: 'There are no records to show.' },
+        'report.toolbar.hint': {
+            es: 'Para obtener el PDF, pulse el botón y elija "Guardar como PDF" como destino.',
+            en: 'To get the PDF, press the button and choose "Save as PDF" as the destination.'
+        },
+        'report.toolbar.pdf': { es: 'Guardar como PDF o imprimir', en: 'Save as PDF or print' },
+        'report.toolbar.html': { es: 'Descargar HTML', en: 'Download HTML' },
+        'report.noData': { es: 'Cargue un archivo antes de generar el informe', en: 'Load a file before generating the report' },
+        'report.blocked': { es: 'El navegador bloqueó la pestaña del informe', en: 'The browser blocked the report tab' },
+        'report.blocked.detail': {
+            es: 'Permita las ventanas emergentes de este sitio y vuelva a intentarlo.',
+            en: 'Allow pop-ups for this site and try again.'
+        },
+        'report.error': { es: 'No se pudo generar el informe', en: 'The report could not be generated' },
+
         /* Resumen del dashboard */
         'dash.summary': { es: 'Resumen', en: 'Summary' },
         'dash.charts': { es: 'Gráficos', en: 'Charts' },
@@ -281,6 +323,7 @@
     /* ---------- Frases de los módulos anteriores (español → inglés) ---------- */
     const PHRASES = {
         // Exportación
+        'Informe PDF': 'PDF report',
         'Exportar a PDF': 'Export to PDF',
         'Exportar a Excel': 'Export to Excel',
         'Imprimir': 'Print',

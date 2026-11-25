@@ -2459,24 +2459,26 @@
                     const buttonContainer = document.createElement('div');
                     buttonContainer.className = 'export-buttons';
 
+                    // El informe HTML (js/report.js) sustituye al PDF y a la impresión anteriores:
+                    // respeta los filtros y el orden de la tabla, y el navegador lo guarda como PDF.
                     const pdfButton = document.createElement('button');
                     pdfButton.className = 'btn';
-                    pdfButton.innerHTML = '<i class="fas fa-file-pdf"></i> Exportar a PDF';
-                    pdfButton.addEventListener('click', () => showExportPrintOptionsModal(sec.category, 'pdf', (options) => generateReportPDF('tab', sec.category, options)));
+                    pdfButton.innerHTML = '<i class="fas fa-file-pdf"></i> Informe PDF';
+                    pdfButton.addEventListener('click', () => {
+                        if (InventorySystem.Report) {
+                            InventorySystem.Report.open(sec.category);
+                        } else {
+                            showExportPrintOptionsModal(sec.category, 'pdf', (options) => generateReportPDF('tab', sec.category, options));
+                        }
+                    });
 
                     const excelButton = document.createElement('button');
                     excelButton.className = 'btn';
                     excelButton.innerHTML = '<i class="fas fa-file-excel"></i> Exportar a Excel';
                     excelButton.addEventListener('click', () => showExportPrintOptionsModal(sec.category, 'excel', (options) => generateReportExcel('tab', sec.category, options)));
 
-                    const printButton = document.createElement('button');
-                    printButton.className = 'btn';
-                    printButton.innerHTML = '<i class="fas fa-print"></i> Imprimir';
-                    printButton.addEventListener('click', () => showExportPrintOptionsModal(sec.category, 'print', (options) => printReport('tab', sec.category, options)));
-
                     buttonContainer.appendChild(pdfButton);
                     buttonContainer.appendChild(excelButton);
-                    buttonContainer.appendChild(printButton);
 
                     const insertReferenceNode = sectionElement.querySelector(sec.searchClass);
                     const tableNode = sectionElement.querySelector('table');
@@ -2498,16 +2500,16 @@
 
                 const pdfButton = document.createElement('button');
                 pdfButton.className = 'btn';
-                pdfButton.innerHTML = '<i class="fas fa-file-pdf"></i> Exportar Dashboard a PDF';
-                pdfButton.addEventListener('click', () => generateReportPDF('tab', 'dashboard', { pageOrientation: 'landscape' }));
-
-                const printButton = document.createElement('button');
-                printButton.className = 'btn';
-                printButton.innerHTML = '<i class="fas fa-print"></i> Imprimir Dashboard';
-                printButton.addEventListener('click', () => printReport('tab', 'dashboard'));
+                pdfButton.innerHTML = '<i class="fas fa-file-pdf"></i> Informe PDF';
+                pdfButton.addEventListener('click', () => {
+                    if (InventorySystem.Report) {
+                        InventorySystem.Report.open('dashboard');
+                    } else {
+                        generateReportPDF('tab', 'dashboard', { pageOrientation: 'landscape' });
+                    }
+                });
 
                 buttonContainer.appendChild(pdfButton);
-                buttonContainer.appendChild(printButton);
                 dashboardSection.insertBefore(buttonContainer, dashboardSection.firstChild);
             }
         }
@@ -2602,7 +2604,11 @@
                 const outputFormat = options.outputFormat || 'pdf';
                 switch (outputFormat) {
                     case 'pdf':
-                        generateReportPDF('complete', 'all', options);
+                        if (InventorySystem.Report) {
+                            InventorySystem.Report.open('complete');
+                        } else {
+                            generateReportPDF('complete', 'all', options);
+                        }
                         break;
                     case 'excel':
                         generateReportExcel('complete', 'all', options);
@@ -2611,7 +2617,11 @@
                         exportCompleteReportToCSV(options);
                         break;
                     case 'print':
-                        printReport('complete', 'all', options);
+                        if (InventorySystem.Report) {
+                            InventorySystem.Report.open('complete', { print: true });
+                        } else {
+                            printReport('complete', 'all', options);
+                        }
                         break;
                     default:
                         InventorySystem.Utils.showError('Formato de exportación no soportado.');

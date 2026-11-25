@@ -288,8 +288,11 @@ Cada pestaña tiene su botón de exportación específico.
 - **Idioma de la interfaz:** el selector ES / EN de la cabecera cambia textos, formato de números y fechas.
   La elección se recuerda en el navegador; la primera vez se usa el idioma del navegador.
   Los textos propios están en `js/i18n.js` (`TEXTS`); los de los módulos de gráficos y exportación se
-  traducen con la tabla `PHRASES` del mismo archivo. Los reportes exportados (PDF, Excel, impresión)
-  se generan en español.
+  traducen con la tabla `PHRASES` del mismo archivo. La exportación a Excel se genera en español.
+- **Informe PDF:** `js/report.js` genera un informe HTML independiente (estilos e imágenes incluidos),
+  pensado para A4, que se abre en una pestaña nueva; desde ahí se guarda como PDF con el cuadro de
+  impresión del navegador o se descarga como HTML. Sustituye a los PDF e impresiones anteriores; la
+  exportación a Excel no cambia. El informe sale en el idioma elegido y respeta filtros y orden.
 - **Resumen del dashboard:** `js/dashboard-summary.js` dibuja, encima de los gráficos, qué revisar,
   cifras clave y cuatro clasificaciones (faltantes, negativos compensados entre pallets, stock por
   almacén y productos con más stock). Cada elemento abre la tabla correspondiente ya filtrada.
