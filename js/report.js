@@ -91,6 +91,7 @@ section > h2 { font-size: 13pt; padding-bottom: 4px; margin-bottom: 8px; border-
 
 .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .charts figure { border: 1px solid #d7dde3; border-radius: 4px; padding: 6px; break-inside: avoid; }
+.charts figure.wide { grid-column: 1 / -1; }
 .charts img { display: block; width: 100%; height: auto; }
 
 table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
@@ -272,7 +273,9 @@ tr.sub td:first-child { padding-left: 16px; color: #5a6875; }
             // Los gráficos ocultos o sin dibujar no se incluyen
             if (!canvas.width || !canvas.height || canvas.offsetParent === null) return;
             try {
-                figures.push('<figure><img alt="" src="' + canvas.toDataURL('image/png') + '"></figure>');
+                // Los gráficos apaisados ocupan todo el ancho para que su texto se lea
+                const wide = canvas.width / canvas.height > 1.8;
+                figures.push('<figure' + (wide ? ' class="wide"' : '') + '><img alt="" src="' + canvas.toDataURL('image/png') + '"></figure>');
             } catch (error) {
                 console.warn('No se pudo incluir un gráfico en el informe:', error);
             }
